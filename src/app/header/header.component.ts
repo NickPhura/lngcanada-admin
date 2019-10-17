@@ -11,18 +11,8 @@ import { KeycloakService } from 'app/services/keycloak.service';
   styleUrls: ['./header.component.scss'],
   animations: [
     trigger('toggleNav', [
-      state(
-        'navClosed',
-        style({
-          height: '0'
-        })
-      ),
-      state(
-        'navOpen',
-        style({
-          height: '*'
-        })
-      ),
+      state('navClosed', style({ height: '0' })),
+      state('navOpen', style({ height: '*' })),
       transition('navOpen => navClosed', [animate('0.2s')]),
       transition('navClosed => navOpen', [animate('0.2s')])
     ])
@@ -40,7 +30,7 @@ export class HeaderComponent implements OnInit {
     scopes: string[];
   };
 
-  constructor(private api: ApiService, private keycloakService: KeycloakService, public router: Router) {
+  constructor(public api: ApiService, private keycloakService: KeycloakService, public router: Router) {
     // this._api = api;
     router.events.subscribe(() => {
       const token = this.keycloakService.getToken();
@@ -77,12 +67,6 @@ export class HeaderComponent implements OnInit {
         this.jwt.username === 'admin'
       );
     }
-  }
-
-  navigateToLogout() {
-    // reset login status
-    this.api.logout();
-    window.location.href = this.keycloakService.getLogoutURL();
   }
 
   toggleNav() {

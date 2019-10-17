@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, forkJoin } from 'rxjs';
-import { map, flatMap, mergeMap, catchError } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 import * as _ from 'lodash';
 
 import { ApiService } from './api';
@@ -26,7 +26,7 @@ export class CommentService {
 
   // get count of comments for the specified comment period id
   getCountByPeriodId(periodId: string): Observable<number> {
-    return this.api.getCountCommentsByPeriodId(periodId).pipe(catchError(error => this.api.handleError(error)));
+    return this.api.getCountCommentsByCommentPeriodId(periodId).pipe(catchError(error => this.api.handleError(error)));
   }
 
   // get all comments for the specified application id
@@ -62,7 +62,7 @@ export class CommentService {
     params: IGetParameters = null
   ): Observable<Comment[]> {
     // first get just the comments
-    return this.api.getCommentsByPeriodId(periodId, pageNum, pageSize, sortBy).pipe(
+    return this.api.getCommentsByCommentPeriodId(periodId, pageNum, pageSize, sortBy).pipe(
       map(res => {
         if (res && res.length > 0) {
           const comments: Comment[] = [];
@@ -73,7 +73,7 @@ export class CommentService {
         }
         return [];
       }),
-      flatMap(comments => {
+      mergeMap(comments => {
         // now get the documents for each comment
         if (params && params.getDocuments) {
           const observables: Array<Observable<Comment>> = [];
@@ -103,7 +103,7 @@ export class CommentService {
   getById(commentId: string, params: IGetParameters = null): Observable<Comment> {
     // first get the comment data
     return this.api.getComment(commentId).pipe(
-      flatMap(comments => {
+      mergeMap(comments => {
         if (comments && comments.length > 0) {
           // return the first (only) comment
           const comment = new Comment(comments[0]);
@@ -142,9 +142,6 @@ export class CommentService {
     if (comment.comment) {
       comment.comment = comment.comment.replace(/\n/g, '\\n');
     }
-    if (comment.review && comment.review.reviewerNotes) {
-      comment.review.reviewerNotes = comment.review.reviewerNotes.replace(/\n/g, '\\n');
-    }
 
     return this.api.addComment(comment).pipe(catchError(error => this.api.handleError(error)));
   }
@@ -160,9 +157,6 @@ export class CommentService {
     if (comment.comment) {
       comment.comment = comment.comment.replace(/\n/g, '\\n');
     }
-    if (comment.review && comment.review.reviewerNotes) {
-      comment.review.reviewerNotes = comment.review.reviewerNotes.replace(/\n/g, '\\n');
-    }
 
     return this.api.saveComment(comment).pipe(catchError(error => this.api.handleError(error)));
   }
@@ -173,32 +167,5 @@ export class CommentService {
 
   unPublish(comment: Comment): Observable<Comment> {
     return this.api.unPublishComment(comment).pipe(catchError(error => this.api.handleError(error)));
-  }
-
-  isAccepted(comment: Comment): boolean {
-    return comment && comment.commentStatus && comment.commentStatus.toLowerCase() === this.accepted.toLowerCase();
-  }
-
-  isPending(comment: Comment): boolean {
-    return comment && comment.commentStatus && comment.commentStatus.toLowerCase() === this.pending.toLowerCase();
-  }
-
-  isRejected(comment: Comment): boolean {
-    return comment && comment.commentStatus && comment.commentStatus.toLowerCase() === this.rejected.toLowerCase();
-  }
-
-  doAccept(comment: Comment): Comment {
-    comment.commentStatus = this.accepted;
-    return comment;
-  }
-
-  doPending(comment: Comment): Comment {
-    comment.commentStatus = this.pending;
-    return comment;
-  }
-
-  doReject(comment: Comment): Comment {
-    comment.commentStatus = this.rejected;
-    return comment;
   }
 }

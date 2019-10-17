@@ -3,8 +3,9 @@
     <a class="navbar-brand" title="Applications, Comments & Reasons for Decision" routerLink="/home">
       <span class="navbar-brand__title">Applications, Comments <span class="wb"><span class="amp">&</span> Reasons for Decision</span></span>
     </a>
+    <span class="navbar-environment" *ngIf="api.env !== 'prod'">{{api.env}}</span>
     <button class="navbar-toggler" type="button" title="Toggle Main Navigation"
-      aria-controls="navbarText" 
+      aria-controls="navbarText"
       aria-expanded="false"
       aria-label="Toggle navigation"
       (click)="toggleNav()">
@@ -18,18 +19,17 @@
             <span>Find Applications</span>
           </a>
         </li>
-
+        <li *ngIf="jwt" class="nav-item">
+          <a class="nav-link" routerLink="/list" title="List ACRFD applications" tabindex="0">
+            <span>List Applications</span>
+          </a>
+        </li>
         <!-- LOGGED IN -->
-        <li *ngIf="jwt; else loggedOut" class="nav-item" placement="bottom-right">
+        <li *ngIf="jwt" class="nav-item" placement="bottom-right">
           <a class="nav-link" id="welcome" tabindex="0">
             <span>{{welcomeMsg}}</span>
           </a>
         </li>
-
-        <!-- LOGGED OUT -->
-        <ng-template #loggedOut>
-          <!-- Placeholder? -->
-        </ng-template>
       </ul>
     </div>
   </nav>

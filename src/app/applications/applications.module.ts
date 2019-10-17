@@ -6,9 +6,9 @@ import { SharedModule } from 'app/shared.module';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ApplicationsRoutingModule } from './applications-routing.module';
+import { InlineSVGModule } from 'ng-inline-svg';
 
 // components
-import { ApplicationListComponent } from './application-list/application-list.component';
 import { ApplicationDetailComponent } from './application-detail/application-detail.component';
 import { ApplicationAsideComponent } from './application-aside/application-aside.component';
 import { ApplicationAddEditComponent } from './application-add-edit/application-add-edit.component';
@@ -18,7 +18,7 @@ import { CommentDetailComponent } from './review-comments/comment-detail/comment
 // services
 import { ApiService } from 'app/services/api';
 import { ApplicationService } from 'app/services/application.service';
-import { ExcelService } from 'app/services/excel.service';
+import { ExportService } from 'app/services/export.service';
 
 @NgModule({
   imports: [
@@ -27,10 +27,10 @@ import { ExcelService } from 'app/services/excel.service';
     SharedModule,
     NgxPaginationModule,
     NgbModule.forRoot(),
+    InlineSVGModule.forRoot(),
     ApplicationsRoutingModule
   ],
   declarations: [
-    ApplicationListComponent,
     ApplicationDetailComponent,
     ApplicationAsideComponent,
     ApplicationAddEditComponent,
@@ -38,13 +38,12 @@ import { ExcelService } from 'app/services/excel.service';
     CommentDetailComponent
   ],
   exports: [
-    ApplicationListComponent,
     ApplicationDetailComponent,
     ApplicationAsideComponent,
     ApplicationAddEditComponent,
     ReviewCommentsComponent,
     CommentDetailComponent
   ],
-  providers: [ApiService, ApplicationService, ExcelService]
+  providers: [ApiService, ApplicationService, ExportService]
 })
 export class ApplicationsModule {}

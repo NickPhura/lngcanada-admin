@@ -3,19 +3,22 @@ import { CommentPeriod } from 'app/models/commentperiod';
 import { ApiService } from 'app/services/api';
 import { of, throwError } from 'rxjs';
 import { CommentPeriodService } from './commentperiod.service';
+import { CommentCodes } from 'app/utils/constants/comment';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('CommentPeriodService', () => {
   let service: CommentPeriodService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
         CommentPeriodService,
         {
           provide: ApiService,
           useValue: jasmine.createSpyObj('ApiService', [
-            'getPeriodsByAppId',
-            'getPeriod',
+            'getCommentPeriodsByApplicationId',
+            'getCommentPeriod',
             'addCommentPeriod',
             'saveCommentPeriod',
             'deleteCommentPeriod',
@@ -41,7 +44,7 @@ describe('CommentPeriodService', () => {
 
     describe('when no comment periods are returned by the Api', () => {
       it('returns an empty CommentPeriod array', async(() => {
-        apiSpy.getPeriodsByAppId.and.returnValue(of([] as CommentPeriod[]));
+        apiSpy.getCommentPeriodsByApplicationId.and.returnValue(of([] as CommentPeriod[]));
 
         service.getAllByApplicationId('123').subscribe(result => expect(result).toEqual([] as CommentPeriod[]));
       }));
@@ -51,7 +54,7 @@ describe('CommentPeriodService', () => {
       it('returns an array with one CommentPeriod element', async(() => {
         const today = new Date();
         const commentPeriods: CommentPeriod[] = [new CommentPeriod({ _id: '1', startDate: today, endDate: today })];
-        apiSpy.getPeriodsByAppId.and.returnValue(of(commentPeriods));
+        apiSpy.getCommentPeriodsByApplicationId.and.returnValue(of(commentPeriods));
 
         service.getAllByApplicationId('123').subscribe(result => {
           expect(result).toEqual(commentPeriods);
@@ -68,7 +71,7 @@ describe('CommentPeriodService', () => {
           new CommentPeriod({ _id: '3', startDate: today, endDate: today })
         ];
 
-        apiSpy.getPeriodsByAppId.and.returnValue(of(commentPeriods));
+        apiSpy.getCommentPeriodsByApplicationId.and.returnValue(of(commentPeriods));
 
         service.getAllByApplicationId('123').subscribe(result => {
           expect(result).toEqual(commentPeriods);
@@ -78,7 +81,7 @@ describe('CommentPeriodService', () => {
 
     describe('when an exception is thrown', () => {
       it('ApiService.handleError is called and the error is re-thrown', async(() => {
-        apiSpy.getPeriodsByAppId.and.returnValue(throwError(new Error('someError')));
+        apiSpy.getCommentPeriodsByApplicationId.and.returnValue(throwError(new Error('someError')));
 
         apiSpy.handleError.and.callFake(error => {
           expect(error).toEqual(Error('someError'));
@@ -105,7 +108,7 @@ describe('CommentPeriodService', () => {
 
     describe('when no comment period is returned by the Api', () => {
       it('returns an empty CommentPeriod array', async(() => {
-        apiSpy.getPeriod.and.returnValue(of(null as CommentPeriod));
+        apiSpy.getCommentPeriod.and.returnValue(of(null as CommentPeriod));
 
         service.getById('123').subscribe(result => expect(result).toEqual(null));
       }));
@@ -119,7 +122,7 @@ describe('CommentPeriodService', () => {
           startDate: today,
           endDate: today
         });
-        apiSpy.getPeriod.and.returnValue(of());
+        apiSpy.getCommentPeriod.and.returnValue(of());
 
         service.getById('123').subscribe(result => {
           expect(result).toEqual(commentPeriod);
@@ -136,7 +139,7 @@ describe('CommentPeriodService', () => {
           new CommentPeriod({ _id: '3', startDate: today, endDate: today })
         ];
 
-        apiSpy.getPeriod.and.returnValue(of(commentPeriod));
+        apiSpy.getCommentPeriod.and.returnValue(of(commentPeriod));
 
         service.getById('123').subscribe(result => {
           expect(result).toEqual(commentPeriod[0]);
@@ -146,7 +149,7 @@ describe('CommentPeriodService', () => {
 
     describe('when an exception is thrown', () => {
       it('ApiService.handleError is called and the error is re-thrown', async(() => {
-        apiSpy.getPeriod.and.returnValue(throwError(new Error('someError')));
+        apiSpy.getCommentPeriod.and.returnValue(throwError(new Error('someError')));
 
         apiSpy.handleError.and.callFake(error => {
           expect(error).toEqual(Error('someError'));
@@ -226,7 +229,7 @@ describe('CommentPeriodService', () => {
 
     describe('when an exception is thrown', () => {
       it('ApiService.handleError is called and the error is re-thrown', async(() => {
-        apiSpy.getPeriod.and.returnValue(throwError(new Error('someError')));
+        apiSpy.getCommentPeriod.and.returnValue(throwError(new Error('someError')));
 
         apiSpy.handleError.and.callFake(error => {
           expect(error).toEqual(Error('someError'));
@@ -597,10 +600,10 @@ describe('CommentPeriodService', () => {
     });
   });
 
-  describe('getStatusCode()', () => {
+  describe('getCode()', () => {
     describe('without a comment period', () => {
       it('returns "NOT_OPEN"', () => {
-        expect(service.getStatusCode(null)).toEqual(service.NOT_OPEN);
+        expect(service.getCode(null)).toEqual(CommentCodes.NOT_OPEN.code);
       });
     });
 
@@ -609,7 +612,7 @@ describe('CommentPeriodService', () => {
         const commentPeriod = new CommentPeriod({
           endDate: Date.now()
         });
-        expect(service.getStatusCode(commentPeriod)).toEqual(service.NOT_OPEN);
+        expect(service.getCode(commentPeriod)).toEqual(CommentCodes.NOT_OPEN.code);
       });
     });
 
@@ -618,7 +621,7 @@ describe('CommentPeriodService', () => {
         const commentPeriod = new CommentPeriod({
           startDate: Date.now()
         });
-        expect(service.getStatusCode(commentPeriod)).toEqual(service.NOT_OPEN);
+        expect(service.getCode(commentPeriod)).toEqual(CommentCodes.NOT_OPEN.code);
       });
     });
 
@@ -628,7 +631,7 @@ describe('CommentPeriodService', () => {
           startDate: new Date('September 28, 2018 08:24:00'),
           endDate: new Date('December 1, 2018 16:24:00')
         });
-        expect(service.getStatusCode(commentPeriod)).toEqual(service.CLOSED);
+        expect(service.getCode(commentPeriod)).toEqual(CommentCodes.CLOSED.code);
       });
     });
 
@@ -638,7 +641,7 @@ describe('CommentPeriodService', () => {
           startDate: new Date('September 28, 2050 08:24:00'),
           endDate: new Date('December 1, 2050 16:24:00')
         });
-        expect(service.getStatusCode(commentPeriod)).toEqual(service.NOT_STARTED);
+        expect(service.getCode(commentPeriod)).toEqual(CommentCodes.NOT_STARTED.code);
       });
     });
 
@@ -648,7 +651,7 @@ describe('CommentPeriodService', () => {
           startDate: new Date('September 28, 2010 08:24:00'),
           endDate: new Date('December 1, 2050 16:24:00')
         });
-        expect(service.getStatusCode(commentPeriod)).toEqual(service.OPEN);
+        expect(service.getCode(commentPeriod)).toEqual(CommentCodes.OPEN.code);
       });
     });
   });
@@ -659,7 +662,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2018 08:24:00'),
         endDate: new Date('December 1, 2018 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isClosed(statusCode)).toBe(true);
     });
 
@@ -668,14 +671,14 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2018 08:24:00'),
         endDate: new Date('December 1, 2050 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isClosed(statusCode)).toBe(false);
     });
   });
 
   describe('isNotOpen()', () => {
     it('returns "true" if the comment period status is null', () => {
-      const statusCode = service.getStatusCode(null);
+      const statusCode = service.getCode(null);
       expect(service.isNotOpen(statusCode)).toBe(true);
     });
 
@@ -683,7 +686,7 @@ describe('CommentPeriodService', () => {
       const commentPeriod = new CommentPeriod({
         endDate: new Date('December 1, 2050 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isNotOpen(statusCode)).toBe(true);
     });
 
@@ -691,7 +694,7 @@ describe('CommentPeriodService', () => {
       const commentPeriod = new CommentPeriod({
         startDate: new Date('September 28, 2018 08:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isNotOpen(statusCode)).toBe(true);
     });
 
@@ -700,7 +703,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2018 08:24:00'),
         endDate: new Date('December 1, 2050 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isClosed(statusCode)).toBe(false);
     });
   });
@@ -711,7 +714,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('December 1, 2050 8:24:00'),
         endDate: new Date('December 31, 2050 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isNotStarted(statusCode)).toBe(true);
     });
 
@@ -720,7 +723,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2018 08:24:00'),
         endDate: new Date('December 1, 2018 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isNotStarted(statusCode)).toBe(false);
     });
   });
@@ -731,7 +734,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2010 08:24:00'),
         endDate: new Date('December 1, 2050 08:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isOpen(statusCode)).toBe(true);
     });
 
@@ -740,7 +743,7 @@ describe('CommentPeriodService', () => {
         startDate: new Date('September 28, 2018 08:24:00'),
         endDate: new Date('December 1, 2018 16:24:00')
       });
-      const statusCode = service.getStatusCode(commentPeriod);
+      const statusCode = service.getCode(commentPeriod);
       expect(service.isOpen(statusCode)).toBe(false);
     });
   });

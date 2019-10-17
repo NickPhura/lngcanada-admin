@@ -6,19 +6,50 @@ import * as _ from 'lodash';
 import { ApiService } from './api';
 import { CommentPeriod } from 'app/models/commentperiod';
 
+import { CommentCodes } from 'app/utils/constants/comment';
+
 @Injectable()
 export class CommentPeriodService {
-  // statuses
-  readonly NOT_STARTED = 'NS';
-  readonly NOT_OPEN = 'NO';
-  readonly CLOSED = 'CL';
-  readonly OPEN = 'OP';
-
   constructor(private api: ApiService) {}
 
-  // get all comment periods for the specified application id
+  // /**
+  //  * Get all comment periods.
+  //  *
+  //  * @param {ICommentPeriodQueryParamSet[]} [queryParamSets=null]
+  //  * @returns {Observable<CommentPeriod[]>}
+  //  * @memberof CommentPeriodService
+  //  */
+  // getAll(queryParamSets: ICommentPeriodQueryParamSet[] = null): Observable<CommentPeriod[]> {
+  //   let observables: Array<Observable<CommentPeriod[]>>;
+
+  //   if (queryParamSets) {
+  //     observables = queryParamSets.map(queryParamSet => this.api.getCommentPeriods(queryParamSet));
+  //   } else {
+  //     observables = [this.api.getCommentPeriods()];
+  //   }
+
+  //   return combineLatest(...observables).pipe(
+  //     mergeMap((res: CommentPeriod[]) => {
+  //       const resCommentPeriods = _.flatten(res);
+  //       if (!resCommentPeriods || resCommentPeriods.length === 0) {
+  //         return of([] as CommentPeriod[]);
+  //       }
+
+  //       return of(resCommentPeriods);
+  //     }),
+  //     catchError(this.api.handleError)
+  //   );
+  // }
+
+  /**
+   * Get all comment periods for the specified application id
+   *
+   * @param {string} appId
+   * @returns {Observable<CommentPeriod[]>}
+   * @memberof CommentPeriodService
+   */
   getAllByApplicationId(appId: string): Observable<CommentPeriod[]> {
-    return this.api.getPeriodsByAppId(appId).pipe(
+    return this.api.getCommentPeriodsByApplicationId(appId).pipe(
       map(res => {
         if (res && res.length > 0) {
           const periods: CommentPeriod[] = [];
@@ -33,9 +64,15 @@ export class CommentPeriodService {
     );
   }
 
-  // get a specific comment period by its id
+  /**
+   * get a specific comment period by its id
+   *
+   * @param {string} periodId
+   * @returns {Observable<CommentPeriod>}
+   * @memberof CommentPeriodService
+   */
   getById(periodId: string): Observable<CommentPeriod> {
-    return this.api.getPeriod(periodId).pipe(
+    return this.api.getCommentPeriod(periodId).pipe(
       map(res => {
         if (res && res.length > 0) {
           // return the first (only) comment period
@@ -76,8 +113,15 @@ export class CommentPeriodService {
     return this.api.unPublishCommentPeriod(period).pipe(catchError(error => this.api.handleError(error)));
   }
 
-  // returns first period
-  // multiple comment periods are currently not supported
+  /**
+   * Returns the first period in the array.
+   *
+   * Note: multiple comment periods are not supported.
+   *
+   * @param {CommentPeriod[]} periods
+   * @returns {CommentPeriod}
+   * @memberof CommentPeriodService
+   */
   getCurrent(periods: CommentPeriod[]): CommentPeriod {
     return periods.length > 0 ? periods[0] : null;
   }
@@ -85,9 +129,9 @@ export class CommentPeriodService {
   /**
    * Given a comment period, returns status code.
    */
-  getStatusCode(period: CommentPeriod): string {
+  getCode(period: CommentPeriod): string {
     if (!period || !period.startDate || !period.endDate) {
-      return this.NOT_OPEN;
+      return CommentCodes.NOT_OPEN.code;
     }
 
     const now = new Date();
@@ -96,46 +140,27 @@ export class CommentPeriodService {
     const endDate = new Date(period.endDate);
 
     if (endDate < today) {
-      return this.CLOSED;
+      return CommentCodes.CLOSED.code;
     } else if (startDate > today) {
-      return this.NOT_STARTED;
+      return CommentCodes.NOT_STARTED.code;
     } else {
-      return this.OPEN;
+      return CommentCodes.OPEN.code;
     }
   }
 
   isNotStarted(statusCode: string): boolean {
-    return statusCode === this.NOT_STARTED;
+    return statusCode === CommentCodes.NOT_STARTED.code;
   }
 
   isNotOpen(statusCode: string): boolean {
-    return statusCode === this.NOT_OPEN;
+    return statusCode === CommentCodes.NOT_OPEN.code;
   }
 
   isClosed(statusCode: string): boolean {
-    return statusCode === this.CLOSED;
+    return statusCode === CommentCodes.CLOSED.code;
   }
 
   isOpen(statusCode: string): boolean {
-    return statusCode === this.OPEN;
-  }
-
-  /**
-   * Given a status code, returns a user-friendly status string.
-   */
-  getStatusString(statusCode: string): string {
-    if (statusCode) {
-      switch (statusCode) {
-        case this.NOT_STARTED:
-          return 'Commenting Not Started';
-        case this.NOT_OPEN:
-          return 'Not Open For Commenting';
-        case this.CLOSED:
-          return 'Commenting Closed';
-        case this.OPEN:
-          return 'Commenting Open';
-      }
-    }
-    return null;
+    return statusCode === CommentCodes.OPEN.code;
   }
 }

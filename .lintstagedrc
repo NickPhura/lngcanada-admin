@@ -1,0 +1,11 @@
+{
+  "*.ts": [
+    "ng lint nrts-prc-admin --fix --format=stylish",
+    "prettier --write --loglevel warn",
+    "git add"
+  ],
+  "*.scss": [
+    "stylelint --fix",
+    "git add"
+  ]
+}

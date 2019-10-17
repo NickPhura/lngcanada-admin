@@ -10,7 +10,7 @@ Administrative front-end for the ACRFD (formerly: PRC) application.
 
 | Technology | Version | Website                 | Description |
 |------------|---------|-------------------------|-------------------------------------------|
-| node       | 8.x.x   | https://nodejs.org/en/  | JavaScript Runtime                        |
+| node       | 10.x.x  | https://nodejs.org/en/  | JavaScript Runtime                        |
 | npm        | 6.x.x   | https://www.npmjs.com/  | Node Package Manager                      |
 | ng         | 6.x.x   | https://cli.angular.io/ | Angular CLI                               |
 | yarn       | latest  | https://yarnpkg.com/en/ | Package Manager (more efficient than npm) |
@@ -85,12 +85,12 @@ Recommend installing the [VSCode Prettier extension](https://github.com/prettier
 * TSlint: tslint.json
 * Prettier: .prettierrc .prettierignore
 * Stylelint: .styleintrc
-* Husky: package.json
-* lint-staged: package.json
+* Husky: .huskyrc
+* lint-staged: .lintstagedrc
 
 ### Pre-Commit Hooks
 
-Package.json has been configured to use `husky`/`lint-staged` to run the `lint-fix` (linting + formatting) commands, against the files staged to be committed, whenever you perform a commit.  This ensures that all committed code has been linted and formatted correctly.
+Package.json has been configured to use `husky` with `lint-staged` to run the `lint-fix` (linting + formatting) commands, against the files staged to be committed, whenever you perform a commit.  This ensures that all committed code has been linted and formatted correctly.
 
 If the linters or formatters find issues that cannot be automatically fixed, it will throw an error and provide output as to what is wrong.  Fix the issues and commit again.
 
@@ -111,7 +111,7 @@ npm run lint
 
 ## Run Linters + Formatters
 
-_Note: In the worst case scenario, where linting/formatting has been neglected, then these `lint-fix` commands have the potential to create 100's of file changes.  In this case, it is recommended to only run these commands as part of a separate commit._
+_Note: In the worst case scenario, where linting/formatting has been neglected, then these `lint-fix` commands have the potential to create hundreds or thousands of file changes.  In this case, it is recommended to only run these commands as part of a separate commit._
 
 _Note: Not all linting/formatting errors can be automatically fixed, and will require human intervention._
 
@@ -137,6 +137,10 @@ npm run lint-fix
 
 [Jasmine](https://jasmine.github.io/), [Karma](https://karma-runner.github.io/latest/index.html), [Protractor](http://www.protractortest.org/)
 
+### Important Note
+
+When viewing test output in the browser, via localhost:9876, Firefox produces somewhat cryptic error output.  Chrome doesn't have this issue.
+
 ## Run Tests
 
 * Run the unit tests with `watch=true`
@@ -144,13 +148,15 @@ npm run lint-fix
 ```
 npm run tests
 ```
-* Run the unit tests with `watch=false`
+* Run the unit tests with `watch=false` and run the coverage report
+
+  View the coverage report at `./coverage/index.html`
 ```
 npm run tests-ci
 ```
 * Run the end-to-end tests
 
-  Before running the tests make sure you are serving the app via `ng serve`.
+  Before running the tests make sure you are serving the app via `ng serve`
 ```
 npm run e2e
 ```
@@ -245,3 +251,36 @@ For dev, test, and prod builds on OpenShift/Jenkins see [openshift/README.md](ht
 # How to Contribute
 
 Create pull requests against the `master` branch.
+
+# VSCode Extensions
+
+A list of recommended/helpful VS Code extensions.
+
+## Linting/Formatting
+
+* TSLint
+* ESLint
+* Prettier - Code formatter
+* stylelint
+* EditorConfig for VS Code
+
+## Languages
+
+* npm
+* Angular Extension pack
+  * This may include 'Beautify' which should be disabled as we are using Prettier.
+* JavaScript (ES6) code snippets
+
+## General
+
+* Auto Comment Blocks
+* Auto-Open Markdown Preview
+* autoDocstring
+* Document This
+* Better Comments
+* Bracket Pair Colorizer
+* Code Spell Checker
+* Declarative Jenkinsfile Support
+* Path intellisense
+* SCSS intellisense
+* Shell launcher

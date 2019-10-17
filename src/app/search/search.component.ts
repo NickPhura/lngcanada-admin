@@ -1,13 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatSnackBarRef, SimpleSnackBar, MatSnackBar } from '@angular/material';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, Params, ParamMap } from '@angular/router';
+import { Location } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import * as _ from 'lodash';
 
 import { SearchService } from 'app/services/search.service';
-import { SearchTerms } from 'app/models/search';
 import { Application } from 'app/models/application';
+import { ConstantUtils, CodeType } from 'app/utils/constants/constantUtils';
+import { StatusCodes, ReasonCodes } from 'app/utils/constants/application';
 
 @Component({
   selector: 'app-search',
@@ -15,59 +17,52 @@ import { Application } from 'app/models/application';
   styleUrls: ['./search.component.scss']
 })
 export class SearchComponent implements OnInit, OnDestroy {
-  public terms = new SearchTerms();
+  private ngUnsubscribe = new Subject<boolean>();
+  private paramMap: ParamMap = null;
+
+  public keywords: string;
+  public applications: Application[] = [];
+  public count = 0; // used in template
+
+  private snackBarRef: MatSnackBarRef<SimpleSnackBar> = null;
+
   public searching = false;
   public ranSearch = false;
-  public keywords: string[] = [];
-  public applications: Application[] = [];
-  public count = 0; // for template
-  private snackBarRef: MatSnackBarRef<SimpleSnackBar> = null;
-  private ngUnsubscribe = new Subject<boolean>();
 
   constructor(
+    private location: Location,
     public snackBar: MatSnackBar,
-    public searchService: SearchService, // also used in template
+    public searchService: SearchService, // used in template
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
     // get search terms from route
-    this.route.params.pipe(takeUntil(this.ngUnsubscribe)).subscribe(params => {
-      if (params.keywords) {
-        // remove empty and duplicate items
-        this.terms.keywords = _.uniq(_.compact(params.keywords.split(','))).join(' ');
-      }
+    this.route.queryParamMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe(paramMap => {
+      this.paramMap = paramMap;
 
-      if (!_.isEmpty(this.terms.getParams())) {
+      this.setInitialQueryParameters();
+
+      if (this.keywords) {
         this.doSearch();
       }
     });
   }
 
-  ngOnDestroy() {
-    // dismiss any open snackbar
-    if (this.snackBarRef) {
-      this.snackBarRef.dismiss();
-    }
-
-    this.ngUnsubscribe.next();
-    this.ngUnsubscribe.complete();
-  }
-
   private doSearch() {
     this.searching = true;
+
+    this.applications = [];
     this.count = 0;
-    this.keywords = (this.terms.keywords && _.uniq(_.compact(this.terms.keywords.split(' ')))) || []; // safety checks
-    this.applications.length = 0; // empty the list
 
     this.searchService
-      .getAppsByClidDtid(this.keywords)
+      .getApplicationsByCLFileAndTantalisID(this.getQueryParameters())
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe(
         applications => {
           applications.forEach(application => {
-            // add if not already in list
+            // add application if not already in the list (no duplicates allowed)
             if (!_.find(this.applications, app => app.tantalisID === application.tantalisID)) {
               this.applications.push(application);
             }
@@ -77,7 +72,6 @@ export class SearchComponent implements OnInit, OnDestroy {
         error => {
           console.log('error =', error);
 
-          // update variables on error
           this.searching = false;
           this.ranSearch = true;
 
@@ -85,29 +79,38 @@ export class SearchComponent implements OnInit, OnDestroy {
           this.snackBarRef.onAction().subscribe(() => this.onSubmit());
         },
         () => {
-          // onCompleted
-          // update variables on completion
           this.searching = false;
           this.ranSearch = true;
         }
       );
   }
 
-  // reload page with current search terms
+  public setInitialQueryParameters() {
+    this.keywords = this.paramMap.get('keywords') || '';
+  }
+
+  public getQueryParameters() {
+    const queryParameters = _.uniq(_.compact(this.keywords.split(',')));
+    return queryParameters;
+  }
+
+  public saveQueryParameters() {
+    const params: Params = {};
+
+    params['keywords'] = this.keywords;
+
+    // change browser URL without reloading page (so any query params are saved in history)
+    this.location.go(this.router.createUrlTree([], { relativeTo: this.route, queryParams: params }).toString());
+  }
+
   public onSubmit() {
-    // dismiss any open snackbar
     if (this.snackBarRef) {
       this.snackBarRef.dismiss();
     }
 
-    // NOTE: Angular Router doesn't reload page on same URL
-    // REF: https://stackoverflow.com/questions/40983055/how-to-reload-the-current-route-with-the-angular-2-router
-    // WORKAROUND: add timestamp to force URL to be different than last time
-    const params = this.terms.getParams();
-    params['ms'] = new Date().getMilliseconds();
+    this.saveQueryParameters();
 
-    // console.log('params =', params);
-    this.router.navigate(['search', params]);
+    this.doSearch();
   }
 
   public onImport(application: Application) {
@@ -120,6 +123,7 @@ export class SearchComponent implements OnInit, OnDestroy {
         type: application.type,
         subtype: application.subtype,
         status: application.status,
+        reason: application.reason,
         tenureStage: application.tenureStage,
         location: application.location,
         businessUnit: application.businessUnit,
@@ -135,5 +139,52 @@ export class SearchComponent implements OnInit, OnDestroy {
       console.log('error, invalid application =', application);
       this.snackBarRef = this.snackBar.open('Error creating application ...', null, { duration: 3000 });
     }
+  }
+
+  /**
+   * Returns true if the application has an abandoned status AND an amendment reason.
+   *
+   * @param {Application} application
+   * @returns {boolean} true if the application has an abandoned status AND an amendment reason, false otherwise.
+   * @memberof SearchComponent
+   */
+  isAmendment(application: Application): boolean {
+    return (
+      application &&
+      ConstantUtils.getCode(CodeType.STATUS, application.status) === StatusCodes.ABANDONED.code &&
+      (ConstantUtils.getCode(CodeType.REASON, application.reason) === ReasonCodes.AMENDMENT_APPROVED.code ||
+        ConstantUtils.getCode(CodeType.REASON, application.reason) === ReasonCodes.AMENDMENT_NOT_APPROVED.code)
+    );
+  }
+
+  /**
+   * Given an application, returns a long user-friendly status string.
+   *
+   * @param {Application} application
+   * @returns {string}
+   * @memberof SearchComponent
+   */
+  getStatusStringLong(application: Application): string {
+    if (!application) {
+      return StatusCodes.UNKNOWN.text.long;
+    }
+
+    // If the application was abandoned, but the reason is due to an amendment, then return an amendment string instead
+    if (this.isAmendment(application)) {
+      return ConstantUtils.getTextLong(CodeType.REASON, application.reason);
+    }
+
+    return (
+      (application && ConstantUtils.getTextLong(CodeType.STATUS, application.status)) || StatusCodes.UNKNOWN.text.long
+    );
+  }
+
+  ngOnDestroy() {
+    if (this.snackBarRef) {
+      this.snackBarRef.dismiss();
+    }
+
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
   }
 }
