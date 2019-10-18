@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "nrts-prc-admin": {
+    "nrpti-admin": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -54,19 +54,19 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "nrts-prc-admin:build",
+            "browserTarget": "nrpti-admin:build",
             "port": 4200
           },
           "configurations": {
             "production": {
-              "browserTarget": "nrts-prc-admin:build:production"
+              "browserTarget": "nrpti-admin:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "nrts-prc-admin:build"
+            "browserTarget": "nrpti-admin:build"
           }
         },
         "test": {
@@ -103,7 +103,7 @@
         }
       }
     },
-    "nrts-prc-admin-e2e": {
+    "nrpti-admin-e2e": {
       "root": "e2e",
       "sourceRoot": "e2e",
       "projectType": "application",
@@ -112,7 +112,7 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "./protractor.conf.js",
-            "devServerTarget": "nrts-prc-admin:serve"
+            "devServerTarget": "nrpti-admin:serve"
           }
         },
         "lint": {
@@ -127,7 +127,7 @@
       }
     }
   },
-  "defaultProject": "nrts-prc-admin",
+  "defaultProject": "nrpti-admin",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",

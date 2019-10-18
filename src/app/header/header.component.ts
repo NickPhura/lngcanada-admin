@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 import { Router } from '@angular/router';
 import { ApiService } from 'app/services/api';
-import { JwtUtil } from 'app/jwt-util';
+import { JwtUtil } from 'app/utils/jwt-utils';
 import { KeycloakService } from 'app/services/keycloak.service';
 
 @Component({

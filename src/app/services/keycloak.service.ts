@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { JwtUtil } from 'app/jwt-util';
+import { JwtUtil } from 'app/utils/jwt-utils';
 import { Observable } from 'rxjs';
 import * as _ from 'lodash';
 
@@ -98,7 +98,13 @@ export class KeycloakService {
     });
   }
 
-  isValidForSite() {
+  /**
+   * Check if the current user is logged in and has admin access.
+   *
+   * @returns true if the user has access, false otherwise.
+   * @memberof KeycloakService
+   */
+  isValidForSite(): boolean {
     if (!this.getToken()) {
       return false;
     }

@@ -1,8 +1,8 @@
-# bcgov/nrts-prc-admin
+# bcgov/nrpti-admin
 
 Administrative front-end for the ACRFD (formerly: PRC) application.
 
-* [Admin](https://github.com/bcgov/nrts-prc-admin) - front-end for admin users.
+* [Admin](https://github.com/bcgov/nrpti-admin) - front-end for admin users.
 * [Public](https://github.com/bcgov/nrts-prc-public) - front-end for public users.
 * [Api](https://github.com/bcgov/nrts-prc-api) - back-end that serves both admin and public requests.
 
