@@ -14,14 +14,14 @@ export class KeycloakService {
   constructor() {
     switch (window.location.origin) {
       case 'http://localhost:4200':
-      case 'https://nrts-prc-dev.pathfinder.gov.bc.ca':
-      case 'https://nrts-prc-master.pathfinder.gov.bc.ca':
+      case 'https://nrpti-dev.pathfinder.gov.bc.ca':
+      case 'https://nrpti-master.pathfinder.gov.bc.ca':
         // Local, Dev, Master
         this.keycloakUrl = 'https://sso-dev.pathfinder.gov.bc.ca/auth';
         this.keycloakRealm = 'prc';
         break;
 
-      case 'https://nrts-prc-test.pathfinder.gov.bc.ca':
+      case 'https://nrpti-test.pathfinder.gov.bc.ca':
         // Test
         this.keycloakUrl = 'https://sso-test.pathfinder.gov.bc.ca/auth';
         this.keycloakRealm = 'acrfd';

@@ -1,15 +1,10 @@
 import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
-import { Application } from 'app/models/application';
-import { IApplicationQueryParamSet, QueryParamModifier } from 'app/services/api';
-import { ApplicationService } from 'app/services/application.service';
-import { RegionCodes, StatusCodes, ReasonCodes, PurposeCodes } from 'app/utils/constants/application';
-import { CodeType, ConstantUtils } from 'app/utils/constants/constantUtils';
-import * as _ from 'lodash';
 import * as moment from 'moment';
-import { forkJoin, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { IRecordQueryParamSet } from 'app/services/api';
 import { ExportService } from 'app/services/export.service';
 
 interface IPaginationParameters {
@@ -36,12 +31,8 @@ export class ListComponent implements OnInit, OnDestroy {
   public exporting = false;
 
   // list of applications to display
-  public applications: Application[] = [];
+  public applications = [];
 
-  // drop down filter values
-  public purposeCodes = new PurposeCodes().getCodeGroups();
-  public regionCodes = new RegionCodes().getCodeGroups();
-  public statusCodes = new StatusCodes().getCodeGroups();
   // enforce specific comment filter order for esthetics
   // public commentCodes = [CommentCodes.NOT_STARTED, CommentCodes.OPEN, CommentCodes.CLOSED, CommentCodes.NOT_OPEN];
 
@@ -74,7 +65,6 @@ export class ListComponent implements OnInit, OnDestroy {
     private location: Location,
     private router: Router,
     private route: ActivatedRoute,
-    private applicationService: ApplicationService,
     private exportService: ExportService
   ) {}
 
@@ -87,46 +77,46 @@ export class ListComponent implements OnInit, OnDestroy {
     this.route.queryParamMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe(paramMap => {
       this.paramMap = paramMap;
 
-      this.setInitialQueryParameters();
-      this.getApplications();
+      // this.setInitialQueryParameters();
+      // this.getRecords();
     });
   }
 
   /**
-   * Fetches applications from ACRFD based on the current filter and pagination parameters.
+   * Fetches records from NRPTI based on the current filter and pagination parameters.
    *
    * Makes 2 calls:
-   * - get applications (fetches at most pagination.itemsPerPage applications)
-   * - get applications count (the total count of matching applications, used when rendering pagination controls)
+   * - get records (fetches at most pagination.itemsPerPage applications)
+   * - get records count (the total count of matching applications, used when rendering pagination controls)
    *
    * @memberof ListComponent
    */
-  public getApplications(): void {
+  public getRecords(): void {
     this.searching = true;
 
     if (this.filterChanged) {
       this.resetPagination();
     }
 
-    forkJoin(
-      this.applicationService.getAll({ getCurrentPeriod: true }, this.getApplicationQueryParamSets()),
-      this.applicationService.getCount(this.getApplicationQueryParamSets())
-    )
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe(
-        ([applications, count]) => {
-          this.updatePagination({ totalItems: count });
-          this.applications = applications;
+    // forkJoin(
+    //   this.recordService.getAll({ getCurrentPeriod: true }, this.getApplicationQueryParamSets()),
+    //   this.recordService.getCount(this.getApplicationQueryParamSets())
+    // )
+    //   .pipe(takeUntil(this.ngUnsubscribe))
+    //   .subscribe(
+    //     ([applications, count]) => {
+    //       this.updatePagination({ totalItems: count });
+    //       this.applications = applications;
 
-          this.searching = false;
-          this.loading = false;
-        },
-        error => {
-          console.log('error = ', error);
-          alert("Uh-oh, couldn't load applications");
-          this.router.navigate(['/list']);
-        }
-      );
+    //       this.searching = false;
+    //       this.loading = false;
+    //     },
+    //     error => {
+    //       console.log('error = ', error);
+    //       alert("Uh-oh, couldn't load applications");
+    //       this.router.navigate(['/list']);
+    //     }
+    //   );
   }
 
   // Export
@@ -147,81 +137,60 @@ export class ListComponent implements OnInit, OnDestroy {
       delete element.pageSize;
     });
 
-    this.applicationService
-      .getAll({ getCurrentPeriod: true }, queryParamsSet)
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe(
-        applications => {
-          // All fields that will be included in the csv, and optionally what the column header text will be.
-          // See www.npmjs.com/package/json2csv for details on the format of the fields array.
-          const fields: any[] = [
-            { label: 'CL File', value: ExportService.getExportPadStartFormatter('cl_file') },
-            { label: 'Disposition ID', value: 'tantalisID' },
-            { label: 'Applicant (client)', value: 'client' },
-            { label: 'Business Unit', value: 'businessUnit' },
-            { label: 'Location', value: 'location' },
-            { label: 'Area (hectares)', value: 'areaHectares' },
-            { label: 'Created Date', value: ExportService.getExportDateFormatter('createdDate') },
-            { label: 'Publish Date', value: ExportService.getExportDateFormatter('publishDate') },
-            { label: 'Purpose', value: 'purpose' },
-            { label: 'Subpurpose', value: 'subpurpose' },
-            { label: 'status', value: this.getExportStatusFormatter('status', 'reason') },
-            {
-              label: 'last status update date',
-              value: ExportService.getExportDateFormatter('statusHistoryEffectiveDate')
-            },
-            { label: 'Type', value: 'type' },
-            { label: 'Subtype', value: 'subtype' },
-            { label: 'Tenure Stage', value: 'tenureStage' },
-            { label: 'Description', value: 'description' },
-            { label: 'Legal Description', value: 'legalDescription' },
-            { label: 'Is Retired', value: 'meta.isRetired' },
-            { label: 'Retire Date', value: ExportService.getExportDateFormatter('meta.retireDate') },
-            { label: 'Comment Period: Status', value: 'meta.cpStatusStringLong' },
-            {
-              label: 'Comment Period: Start Date',
-              value: ExportService.getExportDateFormatter('meta.currentPeriod.startDate')
-            },
-            {
-              label: 'Comment Period: End Date',
-              value: ExportService.getExportDateFormatter('meta.currentPeriod.endDate')
-            },
-            { label: 'Comment Period: Number of Comments', value: 'meta.numComments' }
-          ];
-          this.exportService.exportAsCSV(
-            applications,
-            `ACRFD_Applications_Export_${moment().format('YYYY-MM-DD_HH-mm')}`,
-            fields
-          );
-          this.exporting = false;
-        },
-        error => {
-          this.exporting = false;
-          console.log('error = ', error);
-          alert("Uh-oh, couldn't export applications");
-        }
-      );
-  }
-
-  /**
-   * Convenience method for converting an export Tantalis status code into its ACRFD status code.
-   *
-   * Note: See www.npmjs.com/package/json2csv for details on what this function is supporting.
-   *
-   * @param {string} statusProperty the object property for the status (the key path, not the value). Can be the path to
-   *                                a nested status field: 'some.nested.status'
-   * @param {string} reasonProperty the object property for the reason (the key path, not the value). Can be the path to
-   *                                a nested reason field: 'some.nested.reason'
-   * @returns {(row) => string} a function that takes a row and returns a string
-   * @memberof ListComponent
-   */
-  public getExportStatusFormatter(statusProperty: string, reasonProperty: string): (row) => string {
-    return row => {
-      const statusProp = _.get(row, statusProperty);
-      const reasonProp = _.get(row, reasonProperty);
-
-      return this.applicationService.getStatusStringLong(new Application({ status: statusProp, reason: reasonProp }));
-    };
+    // this.applicationService
+    //   .getAll({ getCurrentPeriod: true }, queryParamsSet)
+    //   .pipe(takeUntil(this.ngUnsubscribe))
+    //   .subscribe(
+    //     applications => {
+    //       // All fields that will be included in the csv, and optionally what the column header text will be.
+    //       // See www.npmjs.com/package/json2csv for details on the format of the fields array.
+    //       const fields: any[] = [
+    //         { label: 'CL File', value: ExportService.getExportPadStartFormatter('cl_file') },
+    //         { label: 'Disposition ID', value: 'tantalisID' },
+    //         { label: 'Applicant (client)', value: 'client' },
+    //         { label: 'Business Unit', value: 'businessUnit' },
+    //         { label: 'Location', value: 'location' },
+    //         { label: 'Area (hectares)', value: 'areaHectares' },
+    //         { label: 'Created Date', value: ExportService.getExportDateFormatter('createdDate') },
+    //         { label: 'Publish Date', value: ExportService.getExportDateFormatter('publishDate') },
+    //         { label: 'Purpose', value: 'purpose' },
+    //         { label: 'Subpurpose', value: 'subpurpose' },
+    //         { label: 'status', value: this.getExportStatusFormatter('status', 'reason') },
+    //         {
+    //           label: 'last status update date',
+    //           value: ExportService.getExportDateFormatter('statusHistoryEffectiveDate')
+    //         },
+    //         { label: 'Type', value: 'type' },
+    //         { label: 'Subtype', value: 'subtype' },
+    //         { label: 'Tenure Stage', value: 'tenureStage' },
+    //         { label: 'Description', value: 'description' },
+    //         { label: 'Legal Description', value: 'legalDescription' },
+    //         { label: 'Is Retired', value: 'meta.isRetired' },
+    //         { label: 'Retire Date', value: ExportService.getExportDateFormatter('meta.retireDate') },
+    //         { label: 'Comment Period: Status', value: 'meta.cpStatusStringLong' },
+    //         {
+    //           label: 'Comment Period: Start Date',
+    //           value: ExportService.getExportDateFormatter('meta.currentPeriod.startDate')
+    //         },
+    //         {
+    //           label: 'Comment Period: End Date',
+    //           value: ExportService.getExportDateFormatter('meta.currentPeriod.endDate')
+    //         },
+    //         { label: 'Comment Period: Number of Comments', value: 'meta.numComments' }
+    //       ];
+    //       this.exportService.exportAsCSV(
+    //         applications,
+    //         `ACRFD_Applications_Export_${moment().format('YYYY-MM-DD_HH-mm')}`,
+    //         fields
+    //       );
+    //       this.exporting = false;
+    //     },
+    //     error => {
+    //       this.exporting = false;
+    //       console.log('error = ', error);
+    //       alert("Uh-oh, couldn't export applications");
+    //     }
+    //   );
   }
 
   // URL Parameters
@@ -252,106 +221,27 @@ export class ListComponent implements OnInit, OnDestroy {
    *
    * The combined results from all query parameter sets is needed to fully satisfy the filters.
    *
-   * @returns {IApplicationQueryParamSet[]} An array of distinct query parameter sets.
+   * @returns {IRecordQueryParamSet[]} An array of distinct query parameter sets.
    * @memberof ListComponent
    */
-  public getApplicationQueryParamSets(): IApplicationQueryParamSet[] {
-    let applicationQueryParamSets: IApplicationQueryParamSet[] = [];
+  public getApplicationQueryParamSets(): IRecordQueryParamSet[] {
+    const recordQueryParamSet: IRecordQueryParamSet[] = [];
 
     // None of these filters require manipulation or unique considerations
 
-    const basicQueryParams: IApplicationQueryParamSet = {
+    const basicQueryParams: IRecordQueryParamSet = {
       isDeleted: false,
       pageNum: this.pagination.currentPage - 1, // API starts at 0, while this component starts at 1
-      pageSize: this.pagination.itemsPerPage,
-      purpose: {
-        value: _.flatMap(
-          this.purposeCodeFilters.map(purposeCode => ConstantUtils.getCode(CodeType.PURPOSE, purposeCode))
-        ),
-        modifier: QueryParamModifier.Equal
-      },
-      businessUnit: {
-        value: ConstantUtils.getCode(CodeType.REGION, this.regionCodeFilter),
-        modifier: QueryParamModifier.Equal
-      },
-      client: {
-        value: this.applicantFilter,
-        modifier: QueryParamModifier.Text
-      }
+      pageSize: this.pagination.itemsPerPage
     };
 
     if (this.sorting.column && this.sorting.direction) {
       basicQueryParams.sortBy = `${this.sorting.direction === -1 ? '-' : '+'}${this.sorting.column}`;
     }
 
-    // Certain Statuses require unique considerations, which are accounted for here
+    recordQueryParamSet.push(basicQueryParams);
 
-    // convert the array of statusCodeFilters into a flattened array of non-null/undefined status (ICodeGroup) objects
-    const appStatusCodeGroups =
-      (this.statusCodeFilters &&
-        _.flatMap(this.statusCodeFilters, statusParam =>
-          ConstantUtils.getCodeGroup(CodeType.STATUS, statusParam)
-        ).filter(Boolean)) ||
-      [];
-
-    appStatusCodeGroups.forEach(statusCodeGroup => {
-      if (statusCodeGroup === StatusCodes.ABANDONED) {
-        // Fetch applications with Abandoned Status that don't have a Reason indicating an amendment.
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: StatusCodes.ABANDONED.mappedCodes, modifier: QueryParamModifier.Equal },
-          reason: {
-            value: [ReasonCodes.AMENDMENT_APPROVED.code, ReasonCodes.AMENDMENT_NOT_APPROVED.code],
-            modifier: QueryParamModifier.Not_Equal
-          }
-        });
-      } else if (statusCodeGroup === StatusCodes.DECISION_APPROVED) {
-        // Fetch applications with Approved status
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: statusCodeGroup.mappedCodes, modifier: QueryParamModifier.Equal }
-        });
-
-        // Also fetch applications with an Abandoned status that also have a Reason indicating an approved amendment.
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: StatusCodes.ABANDONED.mappedCodes, modifier: QueryParamModifier.Equal },
-          reason: {
-            value: [ReasonCodes.AMENDMENT_APPROVED.code],
-            modifier: QueryParamModifier.Equal
-          }
-        });
-      } else if (statusCodeGroup === StatusCodes.DECISION_NOT_APPROVED) {
-        // Fetch applications with Not Approved status
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: statusCodeGroup.mappedCodes, modifier: QueryParamModifier.Equal }
-        });
-
-        // Also fetch applications with an Abandoned status that also have a Reason indicating a not approved amendment.
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: StatusCodes.ABANDONED.mappedCodes, modifier: QueryParamModifier.Equal },
-          reason: {
-            value: [ReasonCodes.AMENDMENT_NOT_APPROVED.code],
-            modifier: QueryParamModifier.Equal
-          }
-        });
-      } else {
-        // This status requires no special treatment, fetch as normal
-        applicationQueryParamSets.push({
-          ...basicQueryParams,
-          status: { value: statusCodeGroup.mappedCodes, modifier: QueryParamModifier.Equal }
-        });
-      }
-    });
-
-    // if no status filters selected, still add the basic query filters
-    if (applicationQueryParamSets.length === 0) {
-      applicationQueryParamSets = [{ ...basicQueryParams }];
-    }
-
-    return applicationQueryParamSets;
+    return recordQueryParamSet;
   }
 
   /**
@@ -380,9 +270,6 @@ export class ListComponent implements OnInit, OnDestroy {
     if (this.applicantFilter) {
       params['applicant'] = this.applicantFilter;
     }
-    // if (this.commentCodeFilters && this.commentCodeFilters.length) {
-    //   params['comment'] = this.convertArrayIntoPipeString(this.commentCodeFilters);
-    // }
 
     // change browser URL without reloading page (so any query params are saved in history)
     this.location.go(this.router.createUrlTree([], { relativeTo: this.route, queryParams: params }).toString());
@@ -453,37 +340,6 @@ export class ListComponent implements OnInit, OnDestroy {
     this.saveQueryParameters();
   }
 
-  // /**
-  //  * Set comment period status filter.
-  //  *
-  //  * @param {string} commentCode
-  //  * @memberof ListComponent
-  //  */
-  // public setCommentFilter(commentCode: string): void {
-  //   this.commentCodeFilters = commentCode ? [commentCode] : [];
-  //   this.filterChanged = true;
-  //   this.saveQueryParameters();
-  // }
-
-  // /**
-  //  * Given an array of Applications, filter out comment periods that don't match the comment period status filter.
-  //  *
-  //  * @param {Application[]} applications
-  //  * @returns
-  //  * @memberof ListComponent
-  //  */
-  // public applyCommentPeriodFilter(applications: Application[]): Application[] {
-  //   if (!applications || !this.commentCodeFilters || !this.commentCodeFilters.length) {
-  //     return applications;
-  //   }
-
-  //   return applications.filter(application => {
-  //     return _.flatMap(
-  //       this.commentCodeFilters.map(commentCode => ConstantUtils.getTextLong(CodeType.COMMENT, commentCode))
-  //     ).includes(application.meta.cpStatusStringLong);
-  //   });
-  // }
-
   // Sorting
 
   /**
@@ -507,7 +363,7 @@ export class ListComponent implements OnInit, OnDestroy {
     }
 
     this.saveQueryParameters();
-    this.getApplications();
+    this.getRecords();
   }
 
   // Pagination
@@ -564,7 +420,7 @@ export class ListComponent implements OnInit, OnDestroy {
    */
   public resetPagination(): void {
     // Minor UI improvement: don't call updatePagination here directly, as it will change the message briefly, before
-    // it is updated by the getApplications call.
+    // it is updated by the getRecords call.
     this.pagination.currentPage = 1;
     this.saveQueryParameters();
     this.filterChanged = false;
@@ -583,7 +439,7 @@ export class ListComponent implements OnInit, OnDestroy {
     ) {
       this.updatePagination({ currentPage: this.pagination.currentPage += page });
       this.saveQueryParameters();
-      this.getApplications();
+      this.getRecords();
     }
   }
 
@@ -597,7 +453,7 @@ export class ListComponent implements OnInit, OnDestroy {
     if (page >= 1 && this.pagination.pageCount >= page) {
       this.updatePagination({ currentPage: page });
       this.saveQueryParameters();
-      this.getApplications();
+      this.getRecords();
     }
   }
 
@@ -619,60 +475,6 @@ export class ListComponent implements OnInit, OnDestroy {
     });
     // trim the last |
     return values.replace(/\|$/, '');
-  }
-
-  /**
-   * Returns true if the application has an abandoned status AND an amendment reason.
-   *
-   * @param {Application} application
-   * @returns {boolean} true if the application has an abandoned status AND an amendment reason, false otherwise.
-   * @memberof ListComponent
-   */
-  isAmendment(application: Application): boolean {
-    return !!(
-      application &&
-      ConstantUtils.getCode(CodeType.STATUS, application.status) === StatusCodes.ABANDONED.code &&
-      (ConstantUtils.getCode(CodeType.REASON, application.reason) === ReasonCodes.AMENDMENT_APPROVED.code ||
-        ConstantUtils.getCode(CodeType.REASON, application.reason) === ReasonCodes.AMENDMENT_NOT_APPROVED.code)
-    );
-  }
-
-  /**
-   * Given an application, returns a long user-friendly status string.
-   *
-   * @param {Application} application
-   * @returns {string}
-   * @memberof ListComponent
-   */
-  getStatusStringLong(application: Application): string {
-    if (!application) {
-      return StatusCodes.UNKNOWN.text.long;
-    }
-
-    // If the application was abandoned, but the reason is due to an amendment, then return an amendment string instead
-    if (this.isAmendment(application)) {
-      return ConstantUtils.getTextLong(CodeType.REASON, application.reason);
-    }
-
-    return (
-      (application && ConstantUtils.getTextLong(CodeType.STATUS, application.status)) || StatusCodes.UNKNOWN.text.long
-    );
-  }
-
-  isApplicationRetired(application: Application): boolean {
-    if (
-      application.statusHistoryEffectiveDate &&
-      [StatusCodes.DECISION_APPROVED.code, StatusCodes.DECISION_NOT_APPROVED.code, StatusCodes.ABANDONED.code].includes(
-        ConstantUtils.getCode(CodeType.STATUS, application.status)
-      )
-    ) {
-      return moment(application.statusHistoryEffectiveDate)
-        .endOf('day')
-        .add(6, 'months')
-        .isBefore();
-    }
-
-    return false;
   }
 
   getFormattedDate(date: Date = null): string {

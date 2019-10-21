@@ -1,18 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-// import { Params } from '@angular/router';
-// import { JwtHelperService } from '@auth0/angular-jwt';
-// import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
 
-import { Application } from 'app/models/application';
-import { Comment } from 'app/models/comment';
-import { CommentPeriod } from 'app/models/commentperiod';
-import { Decision } from 'app/models/decision';
 import { Document } from 'app/models/document';
-import { Feature } from 'app/models/feature';
-import { SearchResults } from 'app/models/search';
 
 /**
  * Supported query param field modifiers used by the api to interpret the query param value.
@@ -53,24 +43,14 @@ export interface IQueryParamValue<T> {
 }
 
 /**
- * refreshApplication response type.
- *
- * @interface IRefreshApplicationResponse
- */
-interface IRefreshApplicationResponse {
-  application: Application;
-  features: Feature[];
-}
-
-/**
  * Supported query parameters for application requests.
  *
  * Note: all parameters are optional.
  *
  * @export
- * @interface IApplicationQueryParamSet
+ * @interface IRecordQueryParamSet
  */
-export interface IApplicationQueryParamSet {
+export interface IRecordQueryParamSet {
   pageNum?: number;
   pageSize?: number;
   sortBy?: string;
@@ -96,27 +76,6 @@ export interface IApplicationQueryParamSet {
   tenureStage?: IQueryParamValue<string>;
 }
 
-// /**
-//  * Supported query parameters for comment period requests.
-//  *
-//  * Note: all parameters are optional.
-//  *
-//  * @export
-//  * @interface ICommentPeriodQueryParamSet
-//  */
-// export interface ICommentPeriodQueryParamSet {
-//   pageNum?: number;
-//   pageSize?: number;
-//   sortBy?: string;
-
-//   isDeleted?: boolean;
-
-//   _application?: IQueryParamValue<string>; // objectId
-//   _addedBy?: IQueryParamValue<string>;
-//   startDate?: IQueryParamValue<Date>;
-//   endDate?: IQueryParamValue<Date>;
-// }
-
 @Injectable()
 export class ApiService {
   public token: string;
@@ -140,27 +99,27 @@ export class ApiService {
         this.env = 'local';
         break;
 
-      case 'nrts-prc-dev.pathfinder.gov.bc.ca':
+      case 'nrpti-dev.pathfinder.gov.bc.ca':
         // Dev
-        this.pathAPI = 'https://nrts-prc-dev.pathfinder.gov.bc.ca/api';
+        this.pathAPI = 'https://nrpti-dev.pathfinder.gov.bc.ca/api';
         this.env = 'dev';
         break;
 
-      case 'nrts-prc-master.pathfinder.gov.bc.ca':
+      case 'nrpti-master.pathfinder.gov.bc.ca':
         // Master
-        this.pathAPI = 'https://nrts-prc-master.pathfinder.gov.bc.ca/api';
+        this.pathAPI = 'https://nrpti-master.pathfinder.gov.bc.ca/api';
         this.env = 'master';
         break;
 
-      case 'nrts-prc-test.pathfinder.gov.bc.ca':
+      case 'nrpti-test.pathfinder.gov.bc.ca':
         // Test
-        this.pathAPI = 'https://nrts-prc-test.pathfinder.gov.bc.ca/api';
+        this.pathAPI = 'https://nrpti-test.pathfinder.gov.bc.ca/api';
         this.env = 'test';
         break;
 
       default:
         // Prod
-        this.pathAPI = 'https://comment.nrs.gov.bc.ca/api';
+        this.pathAPI = 'https://nrpti.nrs.gov.bc.ca/api';
         this.env = 'prod';
     }
   }
@@ -178,412 +137,8 @@ export class ApiService {
   }
 
   //
-  // Applications
-  //
-
-  /**
-   * Fetch all applications that match the provided parameters.
-   *
-   * @param {IApplicationQueryParamSet} [queryParams=null] optional query parameters to filter results
-   * @returns {Observable<Application[]>}
-   * @memberof ApiService
-   */
-  getApplications(queryParams: IApplicationQueryParamSet = null): Observable<Application[]> {
-    const fields = [
-      'agency',
-      'areaHectares',
-      'businessUnit',
-      'centroid',
-      'cl_file',
-      'client',
-      'description',
-      'legalDescription',
-      'location',
-      'name',
-      'createdDate',
-      'publishDate',
-      'purpose',
-      'status',
-      'reason',
-      'statusHistoryEffectiveDate',
-      'subpurpose',
-      'subtype',
-      'tantalisID',
-      'tenureStage',
-      'type'
-    ];
-
-    const queryString =
-      'application?' +
-      `${this.buildApplicationQueryParametersString(queryParams)}&` +
-      `fields=${this.convertArrayIntoPipeString(fields)}`;
-
-    return this.http.get<Application[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  // NB: returns array with 1 element
-  getApplication(id: string): Observable<Application[]> {
-    const fields = [
-      'agency',
-      'areaHectares',
-      'businessUnit',
-      'centroid',
-      'cl_file',
-      'client',
-      'description',
-      'legalDescription',
-      'location',
-      'name',
-      'createdDate',
-      'publishDate',
-      'purpose',
-      'status',
-      'reason',
-      'statusHistoryEffectiveDate',
-      'subpurpose',
-      'subtype',
-      'tantalisID',
-      'tenureStage',
-      'type'
-    ];
-    const queryString = `application/${id}?isDeleted=false&fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Application[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  /**
-   * Gets the number of applications that match the provided parameters.
-   *
-   * @param {IApplicationQueryParamSet} [queryParams=null]
-   * @returns {Observable<number>}
-   * @memberof ApiService
-   */
-  getCountApplications(queryParams: IApplicationQueryParamSet = null): Observable<number> {
-    const queryString = 'application?' + this.buildApplicationQueryParametersString(queryParams);
-
-    return this.http.head<HttpResponse<object>>(`${this.pathAPI}/${queryString}`, { observe: 'response' }).pipe(
-      map(res => {
-        // retrieve the count from the response headers
-        return parseInt(res.headers.get('x-total-count'), 10);
-      })
-    );
-  }
-
-  // NB: returns array
-  getApplicationsByCrownLandID(clid: string): Observable<Application[]> {
-    const fields = [
-      'agency',
-      'areaHectares',
-      'businessUnit',
-      'centroid',
-      'cl_file',
-      'client',
-      'description',
-      'internal',
-      'legalDescription',
-      'location',
-      'name',
-      'createdDate',
-      'publishDate',
-      'purpose',
-      'status',
-      'reason',
-      'statusHistoryEffectiveDate',
-      'subpurpose',
-      'subtype',
-      'tantalisID',
-      'tenureStage',
-      'type'
-    ];
-    const queryString = `application?isDeleted=false&cl_file=${clid}&fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Application[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  // NB: returns array with 1 element
-  getApplicationByTantalisId(tantalisId: number): Observable<Application[]> {
-    const fields = [
-      'agency',
-      'areaHectares',
-      'businessUnit',
-      'centroid',
-      'cl_file',
-      'client',
-      'description',
-      'legalDescription',
-      'location',
-      'name',
-      'createdDate',
-      'publishDate',
-      'purpose',
-      'status',
-      'reason',
-      'statusHistoryEffectiveDate',
-      'subpurpose',
-      'subtype',
-      'tantalisID',
-      'tenureStage',
-      'type'
-    ];
-    const queryString = `application?isDeleted=false&tantalisId=${tantalisId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<Application[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  addApplication(app: Application): Observable<Application> {
-    const queryString = 'application/';
-    return this.http.post<Application>(`${this.pathAPI}/${queryString}`, app, {});
-  }
-
-  publishApplication(app: Application): Observable<Application> {
-    const queryString = `application/${app._id}/publish`;
-    return this.http.put<Application>(`${this.pathAPI}/${queryString}`, app, {});
-  }
-
-  unPublishApplication(app: Application): Observable<Application> {
-    const queryString = `application/${app._id}/unpublish`;
-    return this.http.put<Application>(`${this.pathAPI}/${queryString}`, app, {});
-  }
-
-  deleteApplication(app: Application): Observable<Application> {
-    const queryString = `application/${app._id}`;
-    return this.http.delete<Application>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  refreshApplication(app: Application): Observable<IRefreshApplicationResponse> {
-    const queryString = `application/${app._id}/refresh`;
-    return this.http.put<IRefreshApplicationResponse>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  saveApplication(app: Application): Observable<Application> {
-    const queryString = `application/${app._id}`;
-    return this.http.put<Application>(`${this.pathAPI}/${queryString}`, app, {});
-  }
-
-  //
-  // Features
-  //
-
-  getFeaturesByTantalisId(tantalisId: number): Observable<Feature[]> {
-    const fields = ['type', 'tags', 'geometry', 'properties', 'isDeleted', 'applicationID'];
-    const queryString = `feature?isDeleted=false&tantalisId=${tantalisId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<Feature[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  getFeaturesByApplicationId(applicationId: string): Observable<Feature[]> {
-    const fields = ['type', 'tags', 'geometry', 'properties', 'isDeleted', 'applicationID'];
-    const queryString =
-      'feature?isDeleted=false&' +
-      `applicationId=${applicationId}&` +
-      `fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Feature[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  deleteFeaturesByApplicationId(applicationID: string): Observable<object> {
-    const queryString = `feature/?applicationID=${applicationID}`;
-    return this.http.delete(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  addFeature(feature: Feature): Observable<Feature> {
-    const queryString = 'feature/';
-    return this.http.post<Feature>(`${this.pathAPI}/${queryString}`, feature, {});
-  }
-
-  saveFeature(feature: Feature): Observable<Feature> {
-    const queryString = `feature/${feature._id}`;
-    return this.http.put<Feature>(`${this.pathAPI}/${queryString}`, feature, {});
-  }
-
-  //
-  // Decisions
-  //
-
-  getDecisionsByApplicationId(appId: string): Observable<Decision[]> {
-    const fields = ['_addedBy', '_application', 'description'];
-    const queryString = `decision?_application=${appId}&fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Decision[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  // NB: returns array with 1 element
-  getDecision(id: string): Observable<Decision[]> {
-    const fields = ['_addedBy', '_application', 'description'];
-    const queryString = `decision/${id}?fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Decision[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  addDecision(decision: Decision): Observable<Decision> {
-    const queryString = 'decision/';
-    return this.http.post<Decision>(`${this.pathAPI}/${queryString}`, decision, {});
-  }
-
-  saveDecision(decision: Decision): Observable<Decision> {
-    const queryString = `decision/${decision._id}`;
-    return this.http.put<Decision>(`${this.pathAPI}/${queryString}`, decision, {});
-  }
-
-  deleteDecision(decision: Decision): Observable<Decision> {
-    const queryString = `decision/${decision._id}`;
-    return this.http.delete<Decision>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  publishDecision(decision: Decision): Observable<Decision> {
-    const queryString = `decision/${decision._id}/publish`;
-    return this.http.put<Decision>(`${this.pathAPI}/${queryString}`, decision, {});
-  }
-
-  unPublishDecision(decision: Decision): Observable<Decision> {
-    const queryString = `decision/${decision._id}/unpublish`;
-    return this.http.put<Decision>(`${this.pathAPI}/${queryString}`, decision, {});
-  }
-
-  //
-  // Comment Periods
-  //
-
-  // getCommentPeriods(queryParams: ICommentPeriodQueryParamSet = null): Observable<CommentPeriod[]> {
-  //   const fields = ['_addedBy', '_application', 'description', 'startDate', 'endDate'];
-
-  //   const queryString =
-  //     'commentperiod?' +
-  //     `${this.buildCommentPeriodQueryParametersString(queryParams)}&` +
-  //     `fields=${this.convertArrayIntoPipeString(fields)}`;
-
-  //   return this.http.get<CommentPeriod[]>(`${this.pathAPI}/${queryString}`, {});
-  // }
-
-  getCommentPeriodsByApplicationId(appId: string): Observable<CommentPeriod[]> {
-    const fields = ['_addedBy', '_application', 'startDate', 'endDate'];
-    const queryString = `commentperiod?isDeleted=false&_application=${appId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<CommentPeriod[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  // NB: returns array with 1 element
-  getCommentPeriod(id: string): Observable<CommentPeriod[]> {
-    const fields = ['_addedBy', '_application', 'startDate', 'endDate'];
-    const queryString = `commentperiod/${id}?fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<CommentPeriod[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  addCommentPeriod(period: CommentPeriod): Observable<CommentPeriod> {
-    const queryString = 'commentperiod/';
-    return this.http.post<CommentPeriod>(`${this.pathAPI}/${queryString}`, period, {});
-  }
-
-  saveCommentPeriod(period: CommentPeriod): Observable<CommentPeriod> {
-    const queryString = `commentperiod/${period._id}`;
-    return this.http.put<CommentPeriod>(`${this.pathAPI}/${queryString}`, period, {});
-  }
-
-  deleteCommentPeriod(period: CommentPeriod): Observable<CommentPeriod> {
-    const queryString = `commentperiod/${period._id}`;
-    return this.http.delete<CommentPeriod>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  publishCommentPeriod(period: CommentPeriod): Observable<CommentPeriod> {
-    const queryString = `commentperiod/${period._id}/publish`;
-    return this.http.put<CommentPeriod>(`${this.pathAPI}/${queryString}`, period, {});
-  }
-
-  unPublishCommentPeriod(period: CommentPeriod): Observable<CommentPeriod> {
-    const queryString = `commentperiod/${period._id}/unpublish`;
-    return this.http.put<CommentPeriod>(`${this.pathAPI}/${queryString}`, period, {});
-  }
-
-  //
-  // Comments
-  //
-
-  getCountCommentsByCommentPeriodId(periodId: string): Observable<number> {
-    // NB: count only pending comments
-    const queryString = `comment?isDeleted=false&_commentPeriod=${periodId}`;
-    return this.http.head<HttpResponse<object>>(`${this.pathAPI}/${queryString}`, { observe: 'response' }).pipe(
-      map(res => {
-        // retrieve the count from the response headers
-        return parseInt(res.headers.get('x-total-count'), 10);
-      })
-    );
-  }
-
-  getCommentsByCommentPeriodId(
-    periodId: string,
-    pageNum: number,
-    pageSize: number,
-    sortBy: string
-  ): Observable<Comment[]> {
-    const fields = ['_addedBy', '_commentPeriod', 'comment', 'commentAuthor', 'dateAdded'];
-
-    let queryString = `comment?isDeleted=false&_commentPeriod=${periodId}&`;
-    if (pageNum !== null) {
-      queryString += `pageNum=${pageNum}&`;
-    }
-    if (pageSize !== null) {
-      queryString += `pageSize=${pageSize}&`;
-    }
-    if (sortBy !== null) {
-      queryString += `sortBy=${sortBy}&`;
-    }
-    queryString += `fields=${this.convertArrayIntoPipeString(fields)}`;
-
-    return this.http.get<Comment[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  // NB: returns array with 1 element
-  getComment(id: string): Observable<Comment[]> {
-    const fields = ['_addedBy', '_commentPeriod', 'comment', 'commentAuthor', 'dateAdded'];
-    const queryString = `comment/${id}?fields=${this.convertArrayIntoPipeString(fields)}`;
-    return this.http.get<Comment[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  addComment(comment: Comment): Observable<Comment> {
-    const queryString = 'comment/';
-    return this.http.post<Comment>(`${this.pathAPI}/${queryString}`, comment, {});
-  }
-
-  saveComment(comment: Comment): Observable<Comment> {
-    const queryString = `comment/${comment._id}`;
-    return this.http.put<Comment>(`${this.pathAPI}/${queryString}`, comment, {});
-  }
-
-  publishComment(comment: Comment): Observable<Comment> {
-    const queryString = `comment/${comment._id}/publish`;
-    return this.http.put<Comment>(`${this.pathAPI}/${queryString}`, null, {});
-  }
-
-  unPublishComment(comment: Comment): Observable<Comment> {
-    const queryString = `comment/${comment._id}/unpublish`;
-    return this.http.put<Comment>(`${this.pathAPI}/${queryString}`, null, {});
-  }
-
-  //
   // Documents
   //
-
-  getDocumentsByApplicationId(appId: string): Observable<Document[]> {
-    const fields = ['_application', 'documentFileName', 'displayName', 'internalURL', 'internalMime'];
-    const queryString = `document?isDeleted=false&_application=${appId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<Document[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  getDocumentsByCommentId(commentId: string): Observable<Document[]> {
-    const fields = ['_comment', 'documentFileName', 'displayName', 'internalURL', 'internalMime'];
-    const queryString = `document?isDeleted=false&_comment=${commentId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<Document[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  getDocumentsByDecisionId(decisionId: string): Observable<Document[]> {
-    const fields = ['_decision', 'documentFileName', 'displayName', 'internalURL', 'internalMime'];
-    const queryString = `document?isDeleted=false&_decision=${decisionId}&fields=${this.convertArrayIntoPipeString(
-      fields
-    )}`;
-    return this.http.get<Document[]>(`${this.pathAPI}/${queryString}`, {});
-  }
 
   // NB: returns array with 1 element
   getDocument(id: string): Observable<Document[]> {
@@ -649,20 +204,6 @@ export class ApiService {
     }
   }
 
-  //
-  // Searching
-  //
-
-  searchAppsByCLFile(clid: string): Observable<SearchResults[]> {
-    const queryString = `ttlsapi/crownLandFileNumber/${clid}`;
-    return this.http.get<SearchResults[]>(`${this.pathAPI}/${queryString}`, {});
-  }
-
-  searchAppsByDispositionID(dtid: number): Observable<SearchResults> {
-    const queryString = `ttlsapi/dispositionTransactionId/${dtid}`;
-    return this.http.get<SearchResults>(`${this.pathAPI}/${queryString}`, {});
-  }
-
   /**
    * Converts an array of strings into a single string whose values are separated by a pipe '|' symbol.
    *
@@ -684,11 +225,11 @@ export class ApiService {
   /**
    * Checks each application query parameter of the given queryParams and builds a single query string.
    *
-   * @param {IApplicationQueryParamSet} queryParams
+   * @param {IRecordQueryParamSet} queryParams
    * @returns {string}
    * @memberof ApiService
    */
-  public buildApplicationQueryParametersString(params: IApplicationQueryParamSet): string {
+  public buildApplicationQueryParametersString(params: IRecordQueryParamSet): string {
     if (!params) {
       return '';
     }
@@ -786,56 +327,4 @@ export class ApiService {
     // trim the last &
     return queryString.replace(/\&$/, '');
   }
-
-  // /**
-  //  * Checks each comment period query parameter of the given queryParams and builds a single query string.
-  //  *
-  //  * @param {ICommentPeriodQueryParamSet} queryParams
-  //  * @returns {string}
-  //  * @memberof ApiService
-  //  */
-  // public buildCommentPeriodQueryParametersString(params: ICommentPeriodQueryParamSet): string {
-  //   if (!params) {
-  //     return '';
-  //   }
-
-  //   let queryString = '';
-
-  //   if (params.pageNum >= 0) {
-  //     queryString += `pageNum=${params.pageNum}&`;
-  //   }
-
-  //   if (params.pageSize >= 0) {
-  //     queryString += `pageSize=${params.pageSize}&`;
-  //   }
-
-  //   if (params.sortBy) {
-  //     queryString += `sortBy=${params.sortBy}&`;
-  //   }
-
-  //   if ([true, false].includes(params.isDeleted)) {
-  //     queryString += `isDeleted=${params.isDeleted}&`;
-  //   }
-
-  //   if (params._application && params._application.value) {
-  //     queryString += `_application=${params._application.value}&`;
-  //   }
-
-  //   if (params._addedBy && params._addedBy.value) {
-  //     queryString += `_addedBy=${params._addedBy}&`;
-  //   }
-
-  //   if (params.startDate && params.startDate.value) {
-  //     queryString += `startDate=${params.startDate}&`;
-  //   }
-
-  //   if (params.endDate && params.endDate.value) {
-  //     queryString += `endDate=${params.endDate}&`;
-  //   }
-
-  //   console.log('queryString', queryString);
-
-  //   // trim the last &
-  //   return queryString.replace(/\&$/, '');
-  // }
 }

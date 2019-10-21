@@ -49,49 +49,6 @@
 <div class="bottom-container" *ngIf="application">
   <div class="container">
     <form class="mb-3" #applicationForm="ngForm">
-      <fieldset>
-        <legend>Comment Period</legend>
-        <div class="review-dates">
-          <div class="form-group mb-0">
-            <label>Start Date</label>
-            <div class="input-group" [ngClass]="{'is-invalid': isSubmitSaveClicked && !isValidDate(startDate)}">
-              <input class="form-control" placeholder="yyyy-mm-dd" name="date1" ngbDatepicker #date1="ngbDatepicker"
-                [firstDayOfWeek]="7" navigation="arrows" [(ngModel)]="startDate" (ngModelChange)="onStartDateChg($event)"
-                (click)="date1.close(); date2.close();" required aria-required="true">
-              <div class="input-group-append">
-                <button class="btn btn-icon" (click)="date1.toggle()" type="button" tabindex="-1">
-                  <i class="material-icons">date_range</i>
-                </button>
-              </div>
-            </div>
-            <div class="invalid-feedback bg-danger" *ngIf="isSubmitSaveClicked && !isValidDate(startDate)">
-              Enter a valid Start Date
-            </div>
-          </div>
-          <span class="spacer">+</span>
-          <div class="form-group mb-0">
-            <label>Days</label>
-            <input class="form-control" type="number" min="1" max="365" name="delta" [ngModel]="delta" (ngModelChange)="onDeltaChg($event)" />
-          </div>
-          <span class="spacer">=</span>
-          <div class="form-group mb-0">
-            <label>End Date</label>
-            <div class="input-group" [ngClass]="{'is-invalid': isSubmitSaveClicked && !isValidDate(endDate)}">
-              <input class="form-control" placeholder="yyyy-mm-dd" name="date2" ngbDatepicker #date2="ngbDatepicker"
-                [firstDayOfWeek]="7" navigation="arrows" [(ngModel)]="endDate" (ngModelChange)="onEndDateChg($event)"
-                (click)="date1.close(); date2.close();" required aria-required="true">
-              <div class="input-group-append" tabindex="-1">
-                <button class="btn btn-icon" (click)="date2.toggle()" type="button" tabindex="-1">
-                  <i class="material-icons">date_range</i>
-                </button>
-              </div>
-            </div>
-            <div class="invalid-feedback bg-danger" *ngIf="isSubmitSaveClicked && !isValidDate(endDate)">
-              Enter a valid End Date
-            </div>
-          </div>
-        </div>
-      </fieldset>
 
       <fieldset>
         <legend>Application Details</legend>

@@ -14,22 +14,14 @@ import { AppRoutingModule } from 'app/app-routing.module';
 
 // components
 import { AppComponent } from 'app/app.component';
-import { HomeComponent } from 'app/home/home.component';
-import { SearchComponent } from 'app/search/search.component';
 import { ListComponent } from 'app/list/list.component';
 import { ConfirmComponent } from 'app/confirm/confirm.component';
 import { HeaderComponent } from 'app/header/header.component';
 import { FooterComponent } from 'app/footer/footer.component';
 
 // services
-import { SearchService } from 'app/services/search.service';
-import { FeatureService } from 'app/services/feature.service';
 import { AuthenticationService } from 'app/services/authentication.service';
-import { ApplicationService } from 'app/services/application.service';
-import { CommentPeriodService } from 'app/services/commentperiod.service';
-import { CommentService } from 'app/services/comment.service';
 import { DocumentService } from 'app/services/document.service';
-import { DecisionService } from 'app/services/decision.service';
 import { CanDeactivateGuard } from 'app/services/can-deactivate-guard.service';
 import { KeycloakService } from 'app/services/keycloak.service';
 
@@ -44,8 +36,6 @@ export function kcFactory(keycloakService: KeycloakService) {
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent,
-    SearchComponent,
     ConfirmComponent,
     HeaderComponent,
     FooterComponent,
@@ -77,14 +67,8 @@ export function kcFactory(keycloakService: KeycloakService) {
       useClass: TokenInterceptor,
       multi: true
     },
-    SearchService,
-    FeatureService,
     AuthenticationService,
-    ApplicationService,
-    CommentPeriodService,
-    CommentService,
     DocumentService,
-    DecisionService,
     CanDeactivateGuard
   ],
   entryComponents: [ConfirmComponent],

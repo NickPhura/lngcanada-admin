@@ -1,11 +1,10 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Application } from 'app/models/application';
 
 @Pipe({
   name: 'objectFilter'
 })
 export class ObjectFilterPipe implements PipeTransform {
-  transform(value: Application[], q: string) {
+  transform(value: any[], q: string) {
     if (!q || q === '') {
       return value;
     }

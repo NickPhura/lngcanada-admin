@@ -43,7 +43,7 @@
         <div class="filter-buttons">
           <button class="filter-btn-clear btn btn-secondary" (click)="clearQueryParameters()"
             [disabled]="searching || exporting" title="Clear search filters">Clear</button>
-          <button class="filter-btn-search btn btn-primary" type="submit" (click)="getApplications()"
+          <button class="filter-btn-search btn btn-primary" type="submit" (click)="getRecords()"
             [disabled]="searching || exporting" title="Search for applications">
             Search
             <i class="spinner-border" [hidden]="!searching"></i>

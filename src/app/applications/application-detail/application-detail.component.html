@@ -40,7 +40,7 @@
           </i>
         </button>
         <span class="vert-pipe">&nbsp;</span>
-        <button class="btn btn-icon" title="Remove this application from ACRFD"
+        <button class="btn btn-icon" title="Remove this application from NRPTI"
           (click)="deleteApplication()"
           [disabled]="isDeleting">
           <i class="material-icons">
@@ -168,9 +168,6 @@
                 Location
               </ng-template>
               <ng-template ngbTabContent>
-                <section>
-                  <app-application-aside [application]="application"></app-application-aside>
-                </section>
                 <section *ngIf="!application.meta.features || application.meta.features.length === 0">
                   <!-- if no features, display Legal Description here -->
                   <!-- otherwise it's displayed in shape section below -->
@@ -211,45 +208,13 @@
         <div class="aside-card">
           <h3 class="title">Application Status</h3>
           <div class="body">
-            <div class="app-status">{{applicationService.getStatusStringLong(application) || '-'}}</div>
+            <div class="app-status">{{'-'}}</div>
             <div class="app-status__date text-muted" *ngIf="application.statusHistoryEffectiveDate">
               Last updated on {{application.statusHistoryEffectiveDate | date:'longDate'}}
             </div>
           </div>
         </div>
 
-        <div class="aside-card">
-          <h3 class="title">Comment Period Details</h3>
-          <div class="body" *ngIf="!application.meta.currentPeriod">
-            Not Open For Commenting
-          </div>
-          <div class="body" *ngIf="application.meta.currentPeriod">
-            <ul class="nv-list">
-              <li>
-                <span class="name">Status:</span>
-                <span class="value">{{application.meta.cpStatusStringLong}}</span>
-              </li>
-              <li>
-                <span class="name">Start Date:</span>
-                <span class="value">{{application.meta.currentPeriod.startDate | date:'longDate'}}</span>
-              </li>
-              <li>
-                <span class="name">End Date:</span>
-                <span class="value">{{application.meta.currentPeriod.endDate | date:'longDate'}}</span>
-              </li>
-              <li *ngIf="application.meta.currentPeriod.meta.daysRemaining">
-                <span class="name">Days Remaining:</span>
-                <span class="value">{{application.meta.currentPeriod.meta.daysRemaining}}</span>
-              </li>
-            </ul>
-            <div class="btn-container">
-              <button class="cta-btn btn btn-sm btn-outline-primary" type="button" title="Review comments"
-                [routerLink]="['/comments', application._id]">
-                Review Comments<span *ngIf="application.meta.numComments >= 0">&nbsp;({{application.meta.numComments}})</span>
-              </button>
-            </div>
-          </div>
-        </div>
         <div class="aside-card">
           <h3 class="title">Application Decision Documents</h3>
           <div class="body">

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 import { ApiService } from './api';
@@ -10,54 +10,8 @@ export class DocumentService {
   constructor(private api: ApiService) {}
 
   // get all documents for the specified application id
-  getAllByApplicationId(id: string): Observable<Document[]> {
-    return this.api.getDocumentsByApplicationId(id).pipe(
-      map(res => {
-        if (res && res.length > 0) {
-          const documents: Document[] = [];
-          res.forEach(doc => {
-            documents.push(new Document(doc));
-          });
-          return documents;
-        }
-        return [];
-      }),
-      catchError(error => this.api.handleError(error))
-    );
-  }
-
-  // get all documents for the specified comment id
-  getAllByCommentId(commentId: string): Observable<Document[]> {
-    return this.api.getDocumentsByCommentId(commentId).pipe(
-      map(res => {
-        if (res && res.length > 0) {
-          const documents: Document[] = [];
-          res.forEach(doc => {
-            documents.push(new Document(doc));
-          });
-          return documents;
-        }
-        return [];
-      }),
-      catchError(error => this.api.handleError(error))
-    );
-  }
-
-  // get all documents for the specified decision id
-  getAllByDecisionId(decisionId: string): Observable<Document[]> {
-    return this.api.getDocumentsByDecisionId(decisionId).pipe(
-      map(res => {
-        if (res && res.length > 0) {
-          const documents: Document[] = [];
-          res.forEach(doc => {
-            documents.push(new Document(doc));
-          });
-          return documents;
-        }
-        return [];
-      }),
-      catchError(error => this.api.handleError(error))
-    );
+  getAll(): Observable<Document[]> {
+    return of([] as Document[]);
   }
 
   // get a specific document by its id

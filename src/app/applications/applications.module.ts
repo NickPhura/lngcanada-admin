@@ -10,14 +10,10 @@ import { InlineSVGModule } from 'ng-inline-svg';
 
 // components
 import { ApplicationDetailComponent } from './application-detail/application-detail.component';
-import { ApplicationAsideComponent } from './application-aside/application-aside.component';
 import { ApplicationAddEditComponent } from './application-add-edit/application-add-edit.component';
-import { ReviewCommentsComponent } from './review-comments/review-comments.component';
-import { CommentDetailComponent } from './review-comments/comment-detail/comment-detail.component';
 
 // services
 import { ApiService } from 'app/services/api';
-import { ApplicationService } from 'app/services/application.service';
 import { ExportService } from 'app/services/export.service';
 
 @NgModule({
@@ -32,18 +28,12 @@ import { ExportService } from 'app/services/export.service';
   ],
   declarations: [
     ApplicationDetailComponent,
-    ApplicationAsideComponent,
     ApplicationAddEditComponent,
-    ReviewCommentsComponent,
-    CommentDetailComponent
   ],
   exports: [
     ApplicationDetailComponent,
-    ApplicationAsideComponent,
     ApplicationAddEditComponent,
-    ReviewCommentsComponent,
-    CommentDetailComponent
   ],
-  providers: [ApiService, ApplicationService, ExportService]
+  providers: [ApiService, ExportService]
 })
 export class ApplicationsModule {}
