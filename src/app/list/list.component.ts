@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { IRecordQueryParamSet } from 'app/services/api';
-import { ExportService } from 'app/services/export.service';
+// import { ExportService } from 'app/services/export.service';
 
 interface IPaginationParameters {
   totalItems?: number;
@@ -64,9 +64,9 @@ export class ListComponent implements OnInit, OnDestroy {
   constructor(
     private location: Location,
     private router: Router,
-    private route: ActivatedRoute,
-    private exportService: ExportService
-  ) {}
+    private route: ActivatedRoute
+  ) // private exportService: ExportService
+  {}
 
   /**
    * Component init.
