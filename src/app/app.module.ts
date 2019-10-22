@@ -21,6 +21,7 @@ import { FooterComponent } from 'app/footer/footer.component';
 
 // services
 import { AuthenticationService } from 'app/services/authentication.service';
+import { RecordService } from 'app/services/record.service';
 import { DocumentService } from 'app/services/document.service';
 import { CanDeactivateGuard } from 'app/services/can-deactivate-guard.service';
 import { KeycloakService } from 'app/services/keycloak.service';
@@ -68,6 +69,7 @@ export function kcFactory(keycloakService: KeycloakService) {
       multi: true
     },
     AuthenticationService,
+    RecordService,
     DocumentService,
     CanDeactivateGuard
   ],

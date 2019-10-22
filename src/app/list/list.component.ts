@@ -2,9 +2,12 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
+import * as _ from 'lodash';
+import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { IRecordQueryParamSet } from 'app/services/api';
+import { RecordService } from 'app/services/record.service';
+import { Record } from 'app/models/record';
 // import { ExportService } from 'app/services/export.service';
 
 interface IPaginationParameters {
@@ -31,17 +34,13 @@ export class ListComponent implements OnInit, OnDestroy {
   public exporting = false;
 
   // list of applications to display
-  public applications = [];
-
-  // enforce specific comment filter order for esthetics
-  // public commentCodes = [CommentCodes.NOT_STARTED, CommentCodes.OPEN, CommentCodes.CLOSED, CommentCodes.NOT_OPEN];
+  public records: Record[] = [];
 
   // selected drop down filters
   public purposeCodeFilters: string[] = [];
   public regionCodeFilter = '';
   public statusCodeFilters: string[] = [];
   public applicantFilter = '';
-  // public commentCodeFilters: string[] = [];
 
   // need to reset pagination when a filter is changed, as we can't be sure how many pages of results will exist.
   public filterChanged = false;
@@ -64,9 +63,10 @@ export class ListComponent implements OnInit, OnDestroy {
   constructor(
     private location: Location,
     private router: Router,
-    private route: ActivatedRoute
-  ) // private exportService: ExportService
-  {}
+    private route: ActivatedRoute,
+    // private exportService: ExportService,
+    private recordService: RecordService
+  ) {}
 
   /**
    * Component init.
@@ -77,8 +77,8 @@ export class ListComponent implements OnInit, OnDestroy {
     this.route.queryParamMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe(paramMap => {
       this.paramMap = paramMap;
 
-      // this.setInitialQueryParameters();
-      // this.getRecords();
+      this.setInitialQueryParameters();
+      this.getRecords();
     });
   }
 
@@ -98,25 +98,25 @@ export class ListComponent implements OnInit, OnDestroy {
       this.resetPagination();
     }
 
-    // forkJoin(
-    //   this.recordService.getAll({ getCurrentPeriod: true }, this.getApplicationQueryParamSets()),
-    //   this.recordService.getCount(this.getApplicationQueryParamSets())
-    // )
-    //   .pipe(takeUntil(this.ngUnsubscribe))
-    //   .subscribe(
-    //     ([applications, count]) => {
-    //       this.updatePagination({ totalItems: count });
-    //       this.applications = applications;
+    forkJoin(
+      this.recordService.getAll({ getCurrentPeriod: true }, this.getApplicationQueryParamSets()),
+      this.recordService.getCount(this.getApplicationQueryParamSets())
+    )
+      .pipe(takeUntil(this.ngUnsubscribe))
+      .subscribe(
+        ([records, count]) => {
+          this.updatePagination({ totalItems: count });
+          this.records = records;
 
-    //       this.searching = false;
-    //       this.loading = false;
-    //     },
-    //     error => {
-    //       console.log('error = ', error);
-    //       alert("Uh-oh, couldn't load applications");
-    //       this.router.navigate(['/list']);
-    //     }
-    //   );
+          this.searching = false;
+          this.loading = false;
+        },
+        error => {
+          console.log('error = ', error);
+          alert("Uh-oh, couldn't load applications");
+          this.router.navigate(['/list']);
+        }
+      );
   }
 
   // Export
@@ -165,18 +165,6 @@ export class ListComponent implements OnInit, OnDestroy {
     //         { label: 'Tenure Stage', value: 'tenureStage' },
     //         { label: 'Description', value: 'description' },
     //         { label: 'Legal Description', value: 'legalDescription' },
-    //         { label: 'Is Retired', value: 'meta.isRetired' },
-    //         { label: 'Retire Date', value: ExportService.getExportDateFormatter('meta.retireDate') },
-    //         { label: 'Comment Period: Status', value: 'meta.cpStatusStringLong' },
-    //         {
-    //           label: 'Comment Period: Start Date',
-    //           value: ExportService.getExportDateFormatter('meta.currentPeriod.startDate')
-    //         },
-    //         {
-    //           label: 'Comment Period: End Date',
-    //           value: ExportService.getExportDateFormatter('meta.currentPeriod.endDate')
-    //         },
-    //         { label: 'Comment Period: Number of Comments', value: 'meta.numComments' }
     //       ];
     //       this.exportService.exportAsCSV(
     //         applications,
@@ -211,7 +199,6 @@ export class ListComponent implements OnInit, OnDestroy {
     this.regionCodeFilter = this.paramMap.get('region') || '';
     this.statusCodeFilters = (this.paramMap.get('status') && this.paramMap.get('status').split('|')) || [];
     this.applicantFilter = this.paramMap.get('applicant') || '';
-    // this.commentCodeFilters = (this.paramMap.get('comment') && this.paramMap.get('comment').split('|')) || [];
   }
 
   /**
@@ -291,7 +278,6 @@ export class ListComponent implements OnInit, OnDestroy {
     this.regionCodeFilter = '';
     this.statusCodeFilters = [];
     this.applicantFilter = '';
-    // this.commentCodeFilters = [];
 
     this.location.go(this.router.createUrlTree([], { relativeTo: this.route }).toString());
   }

@@ -6,7 +6,6 @@ import { DocumentService } from 'app/services/document.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-
 @Component({
   selector: 'app-application-detail',
   templateUrl: './application-detail.component.html',
@@ -27,7 +26,7 @@ export class ApplicationDetailComponent implements OnInit, OnDestroy {
     public snackBar: MatSnackBar,
     public api: ApiService, // also used in template
     // private dialogService: DialogService,
-    public documentService: DocumentService,
+    public documentService: DocumentService
   ) {}
 
   ngOnInit() {

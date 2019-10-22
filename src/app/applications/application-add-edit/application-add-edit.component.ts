@@ -39,8 +39,7 @@ export class ApplicationAddEditComponent implements OnInit, AfterViewInit, OnDes
     private router: Router,
     // private location: Location,
     public snackBar: MatSnackBar,
-    private dialogService: DialogService,
-    // private documentService: DocumentService
+    private dialogService: DialogService
   ) {
     // if we have an URL fragment, save it for future scrolling
     router.events.subscribe(event => {

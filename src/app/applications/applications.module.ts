@@ -26,14 +26,8 @@ import { ExportService } from 'app/services/export.service';
     InlineSVGModule.forRoot(),
     ApplicationsRoutingModule
   ],
-  declarations: [
-    ApplicationDetailComponent,
-    ApplicationAddEditComponent,
-  ],
-  exports: [
-    ApplicationDetailComponent,
-    ApplicationAddEditComponent,
-  ],
+  declarations: [ApplicationDetailComponent, ApplicationAddEditComponent],
+  exports: [ApplicationDetailComponent, ApplicationAddEditComponent],
   providers: [ApiService, ExportService]
 })
 export class ApplicationsModule {}

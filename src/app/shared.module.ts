@@ -12,13 +12,6 @@ import { FileUploadComponent } from 'app/file-upload/file-upload.component';
 @NgModule({
   imports: [BrowserModule, MatSlideToggleModule, MatSnackBarModule],
   declarations: [OrderByPipe, NewlinesPipe, ObjectFilterPipe, LinkifyPipe, FileUploadComponent],
-  exports: [
-    MatSlideToggleModule,
-    MatSnackBarModule,
-    OrderByPipe,
-    NewlinesPipe,
-    LinkifyPipe,
-    FileUploadComponent
-  ]
+  exports: [MatSlideToggleModule, MatSnackBarModule, OrderByPipe, NewlinesPipe, LinkifyPipe, FileUploadComponent]
 })
 export class SharedModule {}
