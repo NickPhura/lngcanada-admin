@@ -21,8 +21,7 @@ export class ConfirmComponent extends DialogComponent<IDataModel, boolean> imple
   }
 
   confirm() {
-    // we set dialog result as true on click of confirm button
-    // then we can get dialog result from caller code
+    // we set dialog result as true on click of confirm button, then we can get dialog result from caller code
     this.result = true;
     this.close();
   }

@@ -14,8 +14,7 @@ export enum QueryParamModifier {
   Equal = 'eq', // value must be equal to this, for multiple values must match at least one
   Not_Equal = 'ne', // value must not be equal to this, for multiple values must not match any
   Since = 'since', // date must be on or after this date
-  Until = 'until', // date must be before this date
-  Text = 'text' // value must exist in any text indexed fields.
+  Until = 'until' // date must be before this date
 }
 
 /**
@@ -43,7 +42,7 @@ export interface IQueryParamValue<T> {
 }
 
 /**
- * Supported query parameters for application requests.
+ * Supported query parameters for record requests.
  *
  * Note: all parameters are optional.
  *
@@ -54,26 +53,22 @@ export interface IRecordQueryParamSet {
   pageNum?: number;
   pageSize?: number;
   sortBy?: string;
-
   isDeleted?: boolean;
+}
 
-  agency?: IQueryParamValue<string>;
-  areaHectares?: IQueryParamValue<string>;
-  businessUnit?: IQueryParamValue<string>;
-  centroid?: IQueryParamValue<string>;
-  cl_file?: IQueryParamValue<number>;
-  client?: IQueryParamValue<string>;
-  cpEnd?: IQueryParamValue<Date>;
-  cpStart?: IQueryParamValue<Date>;
-  publishDate?: IQueryParamValue<Date>;
-  purpose?: IQueryParamValue<string[]>;
-  reason?: IQueryParamValue<string[]>;
-  status?: IQueryParamValue<string[]>;
-  statusHistoryEffectiveDate?: IQueryParamValue<Date>;
-  subpurpose?: IQueryParamValue<string[]>;
-  subtype?: IQueryParamValue<string>;
-  tantalisID?: IQueryParamValue<number>;
-  tenureStage?: IQueryParamValue<string>;
+/**
+ * Supported query parameters for document requests.
+ *
+ * Note: all parameters are optional.
+ *
+ * @export
+ * @interface IRecordQueryParamSet
+ */
+export interface IDocumentQueryParamSet {
+  pageNum?: number;
+  pageSize?: number;
+  sortBy?: string;
+  isDeleted?: boolean;
 }
 
 @Injectable()
@@ -125,14 +120,21 @@ export class ApiService {
   }
 
   handleError(error: any): Observable<never> {
-    const reason = error.message
-      ? error.error
-        ? `${error.message} - ${error.error.message}`
-        : error.message
-      : error.status
-      ? `${error.status} - ${error.statusText}`
-      : 'Server error';
-    console.log('API error =', reason);
+    let errorMessage = 'Unknown Server Error';
+
+    if (error) {
+      if (error.message) {
+        if (error.error) {
+          errorMessage = `${error.message} - ${error.error.message}`;
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (error.status) {
+        errorMessage = `${error.status} - ${error.statusText}`;
+      }
+    }
+
+    console.log('Server Error:', errorMessage);
     return throwError(error);
   }
 
@@ -205,31 +207,13 @@ export class ApiService {
   }
 
   /**
-   * Converts an array of strings into a single string whose values are separated by a pipe '|' symbol.
-   *
-   * Example: ['bird','dog','cat'] -> 'bird|dog|cat'
-   *
-   * @private
-   * @param {string[]} collection
-   * @returns {string}
-   * @memberof ApiService
-   */
-  public convertArrayIntoPipeString(collection: string[]): string {
-    if (!collection || collection.length <= 0) {
-      return '';
-    }
-
-    return collection.join('|');
-  }
-
-  /**
-   * Checks each application query parameter of the given queryParams and builds a single query string.
+   * Checks each record query parameter of the given queryParams and builds a single query string.
    *
    * @param {IRecordQueryParamSet} queryParams
    * @returns {string}
    * @memberof ApiService
    */
-  public buildApplicationQueryParametersString(params: IRecordQueryParamSet): string {
+  public buildRecordQueryParametersString(params: IRecordQueryParamSet): string {
     if (!params) {
       return '';
     }
@@ -252,79 +236,59 @@ export class ApiService {
       queryString += `pageSize=${params.pageSize}&`;
     }
 
-    if (params.cpStart && params.cpStart.value) {
-      queryString += `cpStart=${params.cpStart.value.toISOString()}&`;
+    // trim the last &
+    return queryString.replace(/\&$/, '');
+  }
+
+  /**
+   * Checks each document query parameter of the given queryParams and builds a single query string.
+   *
+   * @param {IDocumentQueryParamSet} queryParams
+   * @returns {string}
+   * @memberof ApiService
+   */
+  public buildDocumentQueryParametersString(params: IDocumentQueryParamSet): string {
+    if (!params) {
+      return '';
     }
 
-    if (params.cpEnd && params.cpEnd.value) {
-      queryString += `cpEnd=${params.cpEnd.value.toISOString()}&`;
+    let queryString = '';
+
+    if ([true, false].includes(params.isDeleted)) {
+      queryString += `isDeleted=${params.isDeleted}&`;
     }
 
-    if (params.tantalisID && params.tantalisID.value >= 0) {
-      queryString += `tantalisID=${params.tantalisID.value}&`;
+    if (params.sortBy) {
+      queryString += `sortBy=${params.sortBy}&`;
     }
 
-    if (params.cl_file && params.cl_file.value >= 0) {
-      queryString += `cl_file=${params.cl_file.value}&`;
+    if (params.pageNum >= 0) {
+      queryString += `pageNum=${params.pageNum}&`;
     }
 
-    if (params.purpose && params.purpose.value && params.purpose.value.length) {
-      params.purpose.value.forEach((purpose: string) => (queryString += `purpose[eq]=${encodeURIComponent(purpose)}&`));
-    }
-
-    if (params.subpurpose && params.subpurpose.value && params.subpurpose.value.length) {
-      params.subpurpose.value.forEach(
-        (subpurpose: string) => (queryString += `subpurpose[eq]=${encodeURIComponent(subpurpose)}&`)
-      );
-    }
-
-    if (params.status && params.status.value && params.status.value.length) {
-      params.status.value.forEach((status: string) => (queryString += `status[eq]=${encodeURIComponent(status)}&`));
-    }
-
-    if (params.reason && params.reason.value && params.reason.value.length) {
-      params.reason.value.forEach(
-        (reason: string) => (queryString += `reason[${params.reason.modifier}]=${encodeURIComponent(reason)}&`)
-      );
-    }
-
-    if (params.subtype && params.subtype.value) {
-      queryString += `subtype=${encodeURIComponent(params.subtype.value)}&`;
-    }
-
-    if (params.agency && params.agency.value) {
-      queryString += `agency=${encodeURIComponent(params.agency.value)}&`;
-    }
-
-    if (params.businessUnit && params.businessUnit.value) {
-      queryString += `businessUnit[eq]=${encodeURIComponent(params.businessUnit.value)}&`;
-    }
-
-    if (params.client && params.client.value) {
-      queryString += `client[${params.client.modifier}]=${encodeURIComponent(params.client.value)}&`;
-    }
-
-    if (params.tenureStage && params.tenureStage.value) {
-      queryString += `tenureStage=${encodeURIComponent(params.tenureStage.value)}&`;
-    }
-
-    if (params.areaHectares && params.areaHectares.value) {
-      queryString += `areaHectares=${encodeURIComponent(params.areaHectares.value)}&`;
-    }
-
-    if (params.statusHistoryEffectiveDate && params.statusHistoryEffectiveDate.value) {
-      queryString += `statusHistoryEffectiveDate=${params.statusHistoryEffectiveDate.value.toISOString()}&`;
-    }
-
-    if (params.centroid && params.centroid.value) {
-      queryString += `centroid=${params.centroid.value}&`;
-    }
-
-    if (params.publishDate && params.publishDate.value) {
-      queryString += `publishDate=${params.publishDate.value.toISOString()}&`;
+    if (params.pageSize >= 0) {
+      queryString += `pageSize=${params.pageSize}&`;
     }
 
     // trim the last &
     return queryString.replace(/\&$/, '');
+  }
+
+  /**
+   * Converts an array of strings into a single string whose values are separated by a pipe '|' symbol.
+   *
+   * Example: ['bird','dog','cat'] -> 'bird|dog|cat'
+   *
+   * @private
+   * @param {string[]} collection
+   * @returns {string}
+   * @memberof ApiService
+   */
+  public convertArrayIntoPipeString(collection: string[]): string {
+    if (!collection || collection.length <= 0) {
+      return '';
+    }
+
+    return collection.join('|');
   }
 }

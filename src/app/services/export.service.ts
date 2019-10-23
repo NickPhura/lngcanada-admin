@@ -58,17 +58,26 @@ export class ExportService {
   }
 
   /**
-   * Convenience method for padding a value with 0's to at least 7 characters.
-   * If the string is of length 7 or more to begin with, no padding is performed.
+   * Convenience method for padding a string.
    *
-   * Note: See www.npmjs.com/package/json2csv for details on what this function is supporting.
+   * Note: See www.npmjs.com/package/json2csv for details on why this function is organized the way it is.
    *
    * @param {string} property the object property for a value (the key path, not the value). Can be the path to a
-   *                          nested field: 'some.nested.value'
+   *                          nested field: 'some.nested.value' (required)
+   * @param {number} padLength the length to pad the string to.  If the string is longer than padLength, no padding
+   *                          occurs. (required)
+   * @param {string} padValue the value that will be added to pad the string length, will be repeatedly added
+   *                                     until the padLength is met or exceeded. (required)
+   * @param {boolean} [padEnd=false] true if the padding should be added to the end of the string. (optional)
    * @returns {(row) => string} a function that takes a row and returns a string
    * @memberof ListComponent
    */
-  public static getExportPadStartFormatter(property: string): (row) => string {
+  public static getExportPadStartFormatter(
+    property: string,
+    padLength: number,
+    padValue: string,
+    padEnd: boolean = false
+  ): (row) => string {
     return row => {
       const prop = _.get(row, property);
 
@@ -76,7 +85,11 @@ export class ExportService {
         return null;
       }
 
-      return prop.toString().padStart(7, '0');
+      if (padEnd) {
+        return prop.toString().padEnd(padLength, padValue);
+      }
+
+      return prop.toString().padStart(padLength, padValue);
     };
   }
 }

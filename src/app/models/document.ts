@@ -6,6 +6,7 @@
  */
 export class Document {
   _id: string;
+  _record: string;
   _addedBy: string;
   documentFileName: string;
   displayName: string;
@@ -15,6 +16,7 @@ export class Document {
 
   constructor(obj?: any) {
     this._id = (obj && obj._id) || null;
+    this._record = (obj && obj._record) || null;
     this._addedBy = (obj && obj._addedBy) || null;
     this.documentFileName = (obj && obj.documentFileName) || null;
     this.displayName = (obj && obj.displayName) || null;

@@ -145,7 +145,7 @@ export class ApplicationAddEditComponent implements OnInit, AfterViewInit, OnDes
         this.endDate = this.dateToNgbDate(this.application.meta.currentPeriod.endDate);
         this.onEndDateChg(this.endDate);
       } else {
-        alert("Uh-oh, couldn't load application");
+        alert("Uh-oh, couldn't load records");
         // application not found --> navigate back to search
         this.router.navigate(['/search']);
       }

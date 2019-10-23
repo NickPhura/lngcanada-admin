@@ -2,27 +2,26 @@
 
   <div class="search-container">
     <div class="container" id="anchor-point">
-      <h1>List Crown Land Applications</h1>
+      <h1>List Compliance and Enforcement Records</h1>
 
       <div class="filter-grid">
         <div>
-          <select class="form-control filter-select" (change)="setRegionFilter($event.target.value)"
+          <!-- <select class="form-control filter-select" (change)="setRegionFilter($event.target.value)"
             [disabled]="searching || exporting" title="Filter by Region">
-            <option value="">Filter by Region</option>
+            <option value="">Filter by Demo</option>
             <option *ngFor="let regionCode of regionCodes" [value]="regionCode.param"
               [selected]="regionCodeFilter === regionCode.param">{{regionCode.text.long}}</option>
-          </select>
-          <select class="form-control filter-select" (change)="setPurposeFilter($event.target.value)"
+          </select> -->
+          <!-- <select class="form-control filter-select" (change)="setPurposeFilter($event.target.value)"
             [disabled]="searching || exporting" title="Filter by Purpose">
             <option value="">Filter by Purpose</option>
             <option *ngFor="let purposeCode of purposeCodes" [value]="purposeCode.param"
               [selected]="purposeCodeFilters[0] === purposeCode.param">{{purposeCode.text.long}}</option>
-          </select>
-
+          </select> -->
         </div>
 
         <div>
-          <select class="form-control filter-select" (change)="setStatusFilter($event.target.value)"
+          <!-- <select class="form-control filter-select" (change)="setStatusFilter($event.target.value)"
             [disabled]="searching || exporting" title="Filter by Status">
             <option value="">Filter by Status</option>
             <option *ngFor="let statusCode of statusCodes" [value]="statusCode.param"
@@ -30,21 +29,14 @@
           </select>
           <input class="form-control filter-input" (change)="setApplicantFilter($event.target.value)"
             [value]="applicantFilter" [disabled]="searching || exporting" placeholder="Filter by Applicant"
-            title="Filter by Applicant">
-          <!-- <select class="form-control filter-select" (change)="setCommentFilter($event.target.value)"
-            [disabled]="searching || exporting" title="Filter by comment period">
-            <option value="">Filter by Comment Period</option>
-            <option *ngFor="let commentCode of commentCodes" [value]="commentCode.param"
-              [selected]="commentCodeFilters[0] === commentCode.param">{{commentCode.text.long}}
-            </option>
-          </select> -->
+            title="Filter by Applicant"> -->
         </div>
 
         <div class="filter-buttons">
           <button class="filter-btn-clear btn btn-secondary" (click)="clearQueryParameters()"
             [disabled]="searching || exporting" title="Clear search filters">Clear</button>
           <button class="filter-btn-search btn btn-primary" type="submit" (click)="getRecords()"
-            [disabled]="searching || exporting" title="Search for applications">
+            [disabled]="searching || exporting" title="Search for records">
             Search
             <i class="spinner-border" [hidden]="!searching"></i>
           </button>
@@ -134,38 +126,38 @@
         </thead>
 
         <tbody>
-          <ng-container *ngFor="let app of applications">
+          <ng-container *ngFor="let record of records">
             <tr>
-              <td data-label="Applicant(s)">
-                <span>{{(app.meta.applicants | titlecase) || '-'}}</span>
+              <!-- <td data-label="Applicant(s)">
+                <span>{{(record.meta.applicants | titlecase) || '-'}}</span>
               </td>
               <td data-label="CL File">
                 <span>
-                  <a [routerLink]="['/a', app._id]" title="View application details">{{app.meta.clFile.padStart(7, '0') || '-'}}</a>
+                  <a [routerLink]="['/a', record._id]" title="View application details">{{record.meta.clFile.padStart(7, '0') || '-'}}</a>
                 </span>
               </td>
               <td data-label="Region">
-                <span>{{app.meta.region || '-'}}</span>
+                <span>{{record.meta.region || '-'}}</span>
               </td>
               <td data-label="Created">
-                <span>{{getFormattedDate(app.createdDate) || '-'}}</span>
+                <span>{{getFormattedDate(record.createdDate) || '-'}}</span>
               </td>
               <td data-label="Purpose / Subpurpose">
-                <span>{{(app.purpose | titlecase) || '-'}} / {{(app.subpurpose | titlecase) || '-'}}</span>
+                <span>{{(record.purpose | titlecase) || '-'}} / {{(record.subpurpose | titlecase) || '-'}}</span>
               </td>
               <td data-label="Status">
-                <span>{{getStatusStringLong(app) || '-'}}</span>
+                <span>{{getStatusStringLong(record) || '-'}}</span>
               </td>
               <td data-label="Retired">
-                <span>{{isApplicationRetired(app) && 'Yes' || '-'}}</span>
+                <span>{{isApplicationRetired(record) && 'Yes' || '-'}}</span>
               </td>
               <td data-label="Comment Period">
-                <span>{{app.meta.cpStatusStringLong}}</span>
+                <span>{{record.meta.cpStatusStringLong}}</span>
               </td>
               <td data-label="Comments" class="text-align">
-                <span>{{app.meta.numComments}}</span>
+                <span>{{record.meta.numComments}}</span>
               </td>
-            </tr>
+            </tr> -->
           </ng-container>
         </tbody>
       </table>

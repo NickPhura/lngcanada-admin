@@ -8,6 +8,7 @@ import { takeUntil } from 'rxjs/operators';
 import { IRecordQueryParamSet } from 'app/services/api';
 import { RecordService } from 'app/services/record.service';
 import { Record } from 'app/models/record';
+import { ExportService } from 'app/services/export.service';
 // import { ExportService } from 'app/services/export.service';
 
 interface IPaginationParameters {
@@ -33,14 +34,11 @@ export class ListComponent implements OnInit, OnDestroy {
   // indicates an export is in progress
   public exporting = false;
 
-  // list of applications to display
+  // list of records to display
   public records: Record[] = [];
 
   // selected drop down filters
-  public purposeCodeFilters: string[] = [];
-  public regionCodeFilter = '';
-  public statusCodeFilters: string[] = [];
-  public applicantFilter = '';
+  public demoFilters: string[] = [];
 
   // need to reset pagination when a filter is changed, as we can't be sure how many pages of results will exist.
   public filterChanged = false;
@@ -64,7 +62,7 @@ export class ListComponent implements OnInit, OnDestroy {
     private location: Location,
     private router: Router,
     private route: ActivatedRoute,
-    // private exportService: ExportService,
+    private exportService: ExportService,
     private recordService: RecordService
   ) {}
 
@@ -86,8 +84,8 @@ export class ListComponent implements OnInit, OnDestroy {
    * Fetches records from NRPTI based on the current filter and pagination parameters.
    *
    * Makes 2 calls:
-   * - get records (fetches at most pagination.itemsPerPage applications)
-   * - get records count (the total count of matching applications, used when rendering pagination controls)
+   * - get records (fetches at most pagination.itemsPerPage records)
+   * - get records count (the total count of matching records, used when rendering pagination controls)
    *
    * @memberof ListComponent
    */
@@ -99,8 +97,8 @@ export class ListComponent implements OnInit, OnDestroy {
     }
 
     forkJoin(
-      this.recordService.getAll({ getCurrentPeriod: true }, this.getApplicationQueryParamSets()),
-      this.recordService.getCount(this.getApplicationQueryParamSets())
+      this.recordService.getAll(this.getRecordQueryParamSets()),
+      this.recordService.getCount(this.getRecordQueryParamSets())
     )
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe(
@@ -113,7 +111,7 @@ export class ListComponent implements OnInit, OnDestroy {
         },
         error => {
           console.log('error = ', error);
-          alert("Uh-oh, couldn't load applications");
+          alert("Uh-oh, couldn't load records");
           this.router.navigate(['/list']);
         }
       );
@@ -122,63 +120,44 @@ export class ListComponent implements OnInit, OnDestroy {
   // Export
 
   /**
-   * Fetches all applications that match the filter criteria (ignores pagination) and parses the resulting json into
+   * Fetches all records that match the filter criteria (ignores pagination) and parses the resulting json into
    * a csv for download.  Includes more fields than are shown on the web-page.
    *
    * @memberof ListComponent
    */
   public export(): void {
     this.exporting = true;
-    const queryParamsSet = this.getApplicationQueryParamSets();
+    const queryParamsSet = this.getRecordQueryParamSets();
 
-    // ignore pagination as we want to export ALL search results
+    // ignore pagination as we want to export ALL filtered results, not just the first page.
     queryParamsSet.forEach(element => {
       delete element.pageNum;
       delete element.pageSize;
     });
 
-    // this.applicationService
-    //   .getAll({ getCurrentPeriod: true }, queryParamsSet)
-    //   .pipe(takeUntil(this.ngUnsubscribe))
-    //   .subscribe(
-    //     applications => {
-    //       // All fields that will be included in the csv, and optionally what the column header text will be.
-    //       // See www.npmjs.com/package/json2csv for details on the format of the fields array.
-    //       const fields: any[] = [
-    //         { label: 'CL File', value: ExportService.getExportPadStartFormatter('cl_file') },
-    //         { label: 'Disposition ID', value: 'tantalisID' },
-    //         { label: 'Applicant (client)', value: 'client' },
-    //         { label: 'Business Unit', value: 'businessUnit' },
-    //         { label: 'Location', value: 'location' },
-    //         { label: 'Area (hectares)', value: 'areaHectares' },
-    //         { label: 'Created Date', value: ExportService.getExportDateFormatter('createdDate') },
-    //         { label: 'Publish Date', value: ExportService.getExportDateFormatter('publishDate') },
-    //         { label: 'Purpose', value: 'purpose' },
-    //         { label: 'Subpurpose', value: 'subpurpose' },
-    //         { label: 'status', value: this.getExportStatusFormatter('status', 'reason') },
-    //         {
-    //           label: 'last status update date',
-    //           value: ExportService.getExportDateFormatter('statusHistoryEffectiveDate')
-    //         },
-    //         { label: 'Type', value: 'type' },
-    //         { label: 'Subtype', value: 'subtype' },
-    //         { label: 'Tenure Stage', value: 'tenureStage' },
-    //         { label: 'Description', value: 'description' },
-    //         { label: 'Legal Description', value: 'legalDescription' },
-    //       ];
-    //       this.exportService.exportAsCSV(
-    //         applications,
-    //         `ACRFD_Applications_Export_${moment().format('YYYY-MM-DD_HH-mm')}`,
-    //         fields
-    //       );
-    //       this.exporting = false;
-    //     },
-    //     error => {
-    //       this.exporting = false;
-    //       console.log('error = ', error);
-    //       alert("Uh-oh, couldn't export applications");
-    //     }
-    //   );
+    this.recordService
+      .getAll(queryParamsSet)
+      .pipe(takeUntil(this.ngUnsubscribe))
+      .subscribe(
+        records => {
+          // All fields that will be included in the csv, and optionally what the column header text will be.
+          // See www.npmjs.com/package/json2csv for details on the format of the fields array.
+          const fields: any[] = [
+            { label: 'File #', value: ExportService.getExportPadStartFormatter('fileId', 10, '0') },
+            { label: 'Created Date', value: ExportService.getExportDateFormatter('createdDate') },
+            { label: 'Publish Date', value: ExportService.getExportDateFormatter('publishDate') },
+            { label: 'Description', value: 'description' }
+          ];
+          this.exportService.exportAsCSV(records, `NRPTI_Export_${moment().format('YYYY-MM-DD_HH-mm')}`, fields);
+        },
+        error => {
+          console.log('error = ', error);
+          alert("Uh-oh, couldn't export records");
+        },
+        () => {
+          this.exporting = false;
+        }
+      );
   }
 
   // URL Parameters
@@ -195,23 +174,20 @@ export class ListComponent implements OnInit, OnDestroy {
     this.sorting.direction =
       (this.paramMap.get('sortBy') && (this.paramMap.get('sortBy').charAt(0) === '-' ? -1 : 1)) || 0;
 
-    this.purposeCodeFilters = (this.paramMap.get('purpose') && this.paramMap.get('purpose').split('|')) || [];
-    this.regionCodeFilter = this.paramMap.get('region') || '';
-    this.statusCodeFilters = (this.paramMap.get('status') && this.paramMap.get('status').split('|')) || [];
-    this.applicantFilter = this.paramMap.get('applicant') || '';
+    this.demoFilters = (this.paramMap.get('demo') && this.paramMap.get('demo').split('|')) || [];
   }
 
   /**
    * Builds an array of query parameter sets.
    *
-   * Each query parameter set in the array will return a distinct set of results.
+   * Each query parameter set in the array should return a distinct set of results.
    *
    * The combined results from all query parameter sets is needed to fully satisfy the filters.
    *
    * @returns {IRecordQueryParamSet[]} An array of distinct query parameter sets.
    * @memberof ListComponent
    */
-  public getApplicationQueryParamSets(): IRecordQueryParamSet[] {
+  public getRecordQueryParamSets(): IRecordQueryParamSet[] {
     const recordQueryParamSet: IRecordQueryParamSet[] = [];
 
     // None of these filters require manipulation or unique considerations
@@ -245,17 +221,8 @@ export class ListComponent implements OnInit, OnDestroy {
       params['sortBy'] = `${this.sorting.direction === -1 ? '-' : '+'}${this.sorting.column}`;
     }
 
-    if (this.purposeCodeFilters && this.purposeCodeFilters.length) {
-      params['purpose'] = this.convertArrayIntoPipeString(this.purposeCodeFilters);
-    }
-    if (this.regionCodeFilter) {
-      params['region'] = this.regionCodeFilter;
-    }
-    if (this.statusCodeFilters && this.statusCodeFilters.length) {
-      params['status'] = this.convertArrayIntoPipeString(this.statusCodeFilters);
-    }
-    if (this.applicantFilter) {
-      params['applicant'] = this.applicantFilter;
+    if (this.demoFilters && this.demoFilters.length) {
+      params['demo'] = this.convertArrayIntoPipeString(this.demoFilters);
     }
 
     // change browser URL without reloading page (so any query params are saved in history)
@@ -274,10 +241,7 @@ export class ListComponent implements OnInit, OnDestroy {
     this.sorting.column = null;
     this.sorting.direction = 0;
 
-    this.purposeCodeFilters = [];
-    this.regionCodeFilter = '';
-    this.statusCodeFilters = [];
-    this.applicantFilter = '';
+    this.demoFilters = [];
 
     this.location.go(this.router.createUrlTree([], { relativeTo: this.route }).toString());
   }
@@ -285,43 +249,13 @@ export class ListComponent implements OnInit, OnDestroy {
   // Filters
 
   /**
-   * Set application purpose filter.
+   * Set record demo filter.
    *
-   * @param {string} purposeCode
+   * @param {string} demo
    * @memberof ListComponent
    */
-  public setPurposeFilter(purposeCode: string): void {
-    this.purposeCodeFilters = purposeCode ? [purposeCode] : [];
-    this.filterChanged = true;
-    this.saveQueryParameters();
-  }
-
-  /**
-   * Set application status filter.
-   *
-   * @param {string} statusCode
-   * @memberof ListComponent
-   */
-  public setStatusFilter(statusCode: string): void {
-    this.statusCodeFilters = statusCode ? [statusCode] : [];
-    this.filterChanged = true;
-    this.saveQueryParameters();
-  }
-
-  /**
-   * Set application region filter.
-   *
-   * @param {string} regionCode
-   * @memberof ListComponent
-   */
-  public setRegionFilter(regionCode: string): void {
-    this.regionCodeFilter = regionCode || '';
-    this.filterChanged = true;
-    this.saveQueryParameters();
-  }
-
-  public setApplicantFilter(applicantString: string): void {
-    this.applicantFilter = applicantString || '';
+  public setDemoFilter(demo: string): void {
+    this.demoFilters = demo ? [demo] : [];
     this.filterChanged = true;
     this.saveQueryParameters();
   }
@@ -381,26 +315,22 @@ export class ListComponent implements OnInit, OnDestroy {
     this.pagination.pageCount = Math.max(1, Math.ceil(this.pagination.totalItems / this.pagination.itemsPerPage));
 
     if (this.pagination.totalItems <= 0) {
-      this.pagination.message = 'No applications found';
+      this.pagination.message = 'No records found';
     } else if (this.pagination.currentPage > this.pagination.pageCount) {
       // This check is necessary due to a rare edge-case where the user has manually incremented the page parameter in
-      // the URL beyond what would normally be allowed. As a result when applications are fetched, there aren't enough
-      // to reach this page, and so the total applications found is > 0, but the applications displayed for this page
+      // the URL beyond what would normally be allowed. As a result when records are fetched, there aren't enough
+      // to reach this page, and so the total records found is > 0, but the records displayed for this page
       // is 0, which may confuse users.  Tell them to press clear button which will reset the pagination url parameter.
       this.pagination.message = 'Unable to display results, please clear and re-try';
     } else {
       const low = Math.max((this.pagination.currentPage - 1) * this.pagination.itemsPerPage + 1, 1);
       const high = Math.min(this.pagination.totalItems, this.pagination.currentPage * this.pagination.itemsPerPage);
-      this.pagination.message = `Displaying ${low} - ${high} of ${this.pagination.totalItems} applications`;
+      this.pagination.message = `Displaying ${low} - ${high} of ${this.pagination.totalItems} records`;
     }
   }
 
   /**
    * Resets the pagination.currentPage variable locally and in the URL.
-   *
-   * This is necessary due to a rare edge-case where the user has manually incremented the page parameter in the URL
-   * beyond what would normally be allowed. As a result when applications are fetched, there aren't enough to reach
-   * this page, and so the total applications found is > 0, but the applications displayed for this page is 0.
    *
    * @memberof ListComponent
    */
