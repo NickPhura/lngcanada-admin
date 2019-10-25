@@ -1,5 +1,13 @@
 export class JwtUtil {
-  private urlBase64Decode(str: string) {
+  /**
+   * TODO: populate this documentation
+   *
+   * @private
+   * @param {string} str
+   * @returns
+   * @memberof JwtUtil
+   */
+  static urlBase64Decode(str: string) {
     let output = str.replace(/-/g, '+').replace(/_/g, '/');
     switch (output.length % 4) {
       case 0: {
@@ -19,7 +27,15 @@ export class JwtUtil {
     }
     return decodeURIComponent(encodeURI(window.atob(output)));
   }
-  public decodeToken(token: string) {
+
+  /**
+   * TODO: populate this documentation
+   *
+   * @param {string} token
+   * @returns
+   * @memberof JwtUtil
+   */
+  static decodeToken(token: string) {
     const parts = token.split('.');
     if (parts.length !== 3) {
       return null;

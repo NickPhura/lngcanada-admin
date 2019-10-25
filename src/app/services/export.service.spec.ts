@@ -1,4 +1,4 @@
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { ExportService } from './export.service';
 
@@ -9,7 +9,9 @@ describe('ExportService', () => {
     });
   });
 
-  it('should be created', inject([ExportService], (service: ExportService) => {
+  it('should be created', () => {
+    const service = TestBed.get(ExportService);
+
     expect(service).toBeTruthy();
-  }));
+  });
 });

@@ -18,7 +18,7 @@ export class TokenInterceptor implements HttpInterceptor {
   private tokenRefreshedSource = new Subject();
   private tokenRefreshed$ = this.tokenRefreshedSource.asObservable();
 
-  constructor(private auth: KeycloakService) {}
+  constructor(public auth: KeycloakService) {}
 
   /**
    * Main request intercept handler to automatically add the bearer auth token to every request.

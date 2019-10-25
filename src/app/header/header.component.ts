@@ -37,7 +37,7 @@ export class HeaderComponent implements OnInit {
       // TODO: Change this to observe the change in the _api.token
       if (token) {
         // console.log("token:", token);
-        const jwt = new JwtUtil().decodeToken(token);
+        const jwt = JwtUtil.decodeToken(token);
         // console.log('jwt:', jwt);
         this.welcomeMsg = jwt ? 'Hello ' + jwt.displayName : 'Login';
         // console.log("this:", this.welcomeMsg);

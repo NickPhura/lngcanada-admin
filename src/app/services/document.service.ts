@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
-import { ApiService, IDocumentQueryParamSet } from './api';
+import { ApiService } from './api';
 import { Document } from 'app/models/document';
 
 /**
@@ -12,7 +12,7 @@ import { Document } from 'app/models/document';
  */
 @Injectable()
 export class DocumentService {
-  constructor(private api: ApiService) {}
+  constructor(public api: ApiService) {}
 
   /**
    * Return all documents that match the provided filters.
@@ -21,7 +21,7 @@ export class DocumentService {
    * @returns {Observable<Document[]>} total results from all query param sets. Not guaranteed to be unique.
    * @memberof DocumentService
    */
-  public getAll(queryParamSets: IDocumentQueryParamSet[]): Observable<Document[]> {
+  public getAll(/* queryParamSets: IDocumentQueryParamSet[] */): Observable<Document[]> {
     return of([] as Document[]);
   }
 
@@ -32,7 +32,7 @@ export class DocumentService {
    * @returns {Observable<number>} total results from all query param sets. Not guaranteed to be unique.
    * @memberof DocumentService
    */
-  public getCount(queryParamSets: IDocumentQueryParamSet[]): Observable<number> {
+  public getCount(/* queryParamSets: IDocumentQueryParamSet[] */): Observable<number> {
     return of(0);
   }
 }

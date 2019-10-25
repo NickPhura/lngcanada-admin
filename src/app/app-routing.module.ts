@@ -11,13 +11,13 @@ const routes: Routes = [
     component: NotAuthorizedComponent
   },
   {
-    path: 'list',
+    path: '',
     component: ListComponent
   },
   {
     // wildcard route
     path: '**',
-    redirectTo: '/',
+    redirectTo: '',
     pathMatch: 'full'
   }
 ];

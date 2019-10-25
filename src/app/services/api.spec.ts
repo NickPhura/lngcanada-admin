@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule /*, HttpTestingController*/ } from '@angular/common/http/testing';
-import { ApiService, IApplicationQueryParamSet, QueryParamModifier } from './api';
+import { ApiService, IRecordQueryParamSet, QueryParamModifier } from './api';
 
 describe('ApiService', () => {
   // let httpMock: HttpTestingController;
@@ -15,26 +15,6 @@ describe('ApiService', () => {
   it('should be created', () => {
     const service = TestBed.get(ApiService);
     expect(service).toBeTruthy();
-  });
-
-  describe('convertArrayIntoPipeString', () => {
-    let service;
-
-    beforeEach(() => {
-      service = TestBed.get(ApiService);
-    });
-
-    it('given an empty array returns empty string', () => {
-      const result = service.convertArrayIntoPipeString([]);
-
-      expect(result).toEqual('');
-    });
-
-    it('given a valid array returns a pipe deliminated string', () => {
-      const result = service.convertArrayIntoPipeString(['dog', 'cat', 'bird', 'big lizard']);
-
-      expect(result).toEqual('dog|cat|bird|big lizard');
-    });
   });
 
   describe('buildApplicationQueryParametersString', () => {
@@ -57,7 +37,7 @@ describe('ApiService', () => {
     });
 
     it('given all query params', () => {
-      const queryParams: IApplicationQueryParamSet = {
+      const queryParams: IRecordQueryParamSet = {
         pageNum: 0,
         pageSize: 30,
         sortBy: 'status',

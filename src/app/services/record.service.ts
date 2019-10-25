@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 
 import { ApiService, IRecordQueryParamSet } from './api';
 import { Record } from 'app/models/record';
+import { mergeMap, catchError } from 'rxjs/operators';
+import * as _ from 'lodash';
 
 /**
  * Provides methods for retrieving and working with records.
@@ -12,7 +14,7 @@ import { Record } from 'app/models/record';
  */
 @Injectable()
 export class RecordService {
-  constructor(private api: ApiService) {}
+  constructor(public api: ApiService) {}
 
   /**
    * Return all records that match the provided filters.
@@ -21,8 +23,29 @@ export class RecordService {
    * @returns {Observable<Record[]>} total results from all query param sets. Not guaranteed to be unique.
    * @memberof RecordService
    */
-  public getAll(queryParamSet: IRecordQueryParamSet[]): Observable<Record[]> {
-    return of([] as Record[]);
+  public getAll(queryParamSets: IRecordQueryParamSet[] = null): Observable<Record[]> {
+    console.log('111');
+    let observables: Array<Observable<Record[]>>;
+
+    if (queryParamSets && queryParamSets.length) {
+      observables = queryParamSets.map(queryParamSet => this.api.getRecords(queryParamSet));
+    } else {
+      observables = [this.api.getRecords()];
+    }
+    console.log(observables.length);
+
+    return combineLatest(...observables).pipe(
+      mergeMap((results: Record[]) => {
+        console.log(results);
+        const flattenedResults = _.flatten(results);
+        if (!flattenedResults || !flattenedResults.length) {
+          return of([] as Record[]);
+        }
+
+        return of(flattenedResults);
+      }),
+      catchError(this.api.handleError)
+    );
   }
 
   /**
@@ -32,7 +55,25 @@ export class RecordService {
    * @returns {Observable<number>} total results from all query param sets. Not guaranteed to be unique.
    * @memberof RecordService
    */
-  public getCount(queryParamSet: IRecordQueryParamSet[]): Observable<number> {
-    return of(0);
+  public getCount(queryParamSets: IRecordQueryParamSet[] = null): Observable<number> {
+    let observables: Array<Observable<Record[]>>;
+
+    if (queryParamSets && queryParamSets.length) {
+      observables = queryParamSets.map(queryParamSet => this.api.getRecordsCount(queryParamSet));
+    } else {
+      observables = [this.api.getRecordsCount()];
+    }
+
+    return combineLatest(...observables).pipe(
+      mergeMap((results: Record[]) => {
+        const flattenedResults = _.flatten(results);
+        if (!flattenedResults || !flattenedResults.length) {
+          return of(0);
+        }
+
+        return of(flattenedResults.length);
+      }),
+      catchError(this.api.handleError)
+    );
   }
 }

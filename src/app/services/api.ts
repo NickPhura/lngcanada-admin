@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
 import { Document } from 'app/models/document';
+import { Utils } from 'app/utils/utils';
+import { Record } from 'app/models/record';
 
 /**
  * Supported query param field modifiers used by the api to interpret the query param value.
@@ -71,22 +73,24 @@ export interface IDocumentQueryParamSet {
   isDeleted?: boolean;
 }
 
+/**
+ * TODO: populate this documentation
+ *
+ * @export
+ * @class ApiService
+ */
 @Injectable()
 export class ApiService {
   public token: string;
   public isMS: boolean; // IE, Edge, etc
-  // private jwtHelper: JwtHelperService;
+
   pathAPI: string;
-  // params: Params;
   env: 'local' | 'dev' | 'test' | 'master' | 'prod';
 
-  constructor(private http: HttpClient) {
-    // this.jwtHelper = new JwtHelperService();
-    const currentUser = JSON.parse(window.localStorage.getItem('currentUser'));
-    this.token = currentUser && currentUser.token;
+  constructor(public http: HttpClient) {
+    const { hostname } = window.location;
     this.isMS = window.navigator.msSaveOrOpenBlob ? true : false;
 
-    const { hostname } = window.location;
     switch (hostname) {
       case 'localhost':
         // Local
@@ -119,23 +123,39 @@ export class ApiService {
     }
   }
 
-  handleError(error: any): Observable<never> {
-    let errorMessage = 'Unknown Server Error';
+  /**
+   * Get count of matching records.
+   *
+   * @param {IRecordQueryParamSet} [queryParams=null]
+   * @returns {Observable<Record[]>} Observable that emits the count of matching records.
+   * @memberof ApiService
+   */
+  getRecordsCount(queryParams: IRecordQueryParamSet = null): Observable<Record[]> {
 
-    if (error) {
-      if (error.message) {
-        if (error.error) {
-          errorMessage = `${error.message} - ${error.error.message}`;
-        } else {
-          errorMessage = error.message;
-        }
-      } else if (error.status) {
-        errorMessage = `${error.status} - ${error.statusText}`;
-      }
-    }
+    console.log(Record.getFields());
 
-    console.log('Server Error:', errorMessage);
-    return throwError(error);
+    const queryString =
+      'record?' +
+      `${this.buildRecordQueryParametersString(queryParams)}&` +
+      `fields=${Utils.convertArrayIntoPipeString(Record.getFields())}`;
+
+    return this.http.head<Record[]>(`${this.pathAPI}/${queryString}`, {});
+  }
+
+  /**
+   * Get matching records.
+   *
+   * @param {IRecordQueryParamSet} [queryParams=null]
+   * @returns {Observable<Record[]>} Observable that emits an array of matching records.
+   * @memberof ApiService
+   */
+  getRecords(queryParams: IRecordQueryParamSet = null): Observable<Record[]> {
+    const queryString =
+      'record?' +
+      `${this.buildRecordQueryParametersString(queryParams)}&` +
+      `fields=${Utils.convertArrayIntoPipeString(Record.getFields())}`;
+
+    return this.http.get<Record[]>(`${this.pathAPI}/${queryString}`, {});
   }
 
   //
@@ -165,7 +185,7 @@ export class ApiService {
 
   uploadDocument(formData: FormData): Observable<Document> {
     const fields = ['documentFileName', 'displayName', 'internalURL', 'internalMime'];
-    const queryString = `document/?fields=${this.convertArrayIntoPipeString(fields)}`;
+    const queryString = `document/?fields=${Utils.convertArrayIntoPipeString(fields)}`;
     return this.http.post<Document>(`${this.pathAPI}/${queryString}`, formData, {});
   }
 
@@ -275,20 +295,28 @@ export class ApiService {
   }
 
   /**
-   * Converts an array of strings into a single string whose values are separated by a pipe '|' symbol.
+   * General error handler.  Used to transform and log error messages before throwing.
    *
-   * Example: ['bird','dog','cat'] -> 'bird|dog|cat'
-   *
-   * @private
-   * @param {string[]} collection
-   * @returns {string}
+   * @param {*} error
+   * @returns {Observable<never>}
    * @memberof ApiService
    */
-  public convertArrayIntoPipeString(collection: string[]): string {
-    if (!collection || collection.length <= 0) {
-      return '';
+  handleError(error: any): Observable<never> {
+    let errorMessage = 'Unknown Server Error';
+
+    if (error) {
+      if (error.message) {
+        if (error.error) {
+          errorMessage = `${error.message} - ${error.error.message}`;
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (error.status) {
+        errorMessage = `${error.status} - ${error.statusText}`;
+      }
     }
 
-    return collection.join('|');
+    console.log('Server Error:', errorMessage);
+    return throwError(error);
   }
 }

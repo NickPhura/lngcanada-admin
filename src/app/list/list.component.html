@@ -140,7 +140,7 @@
                 <span>{{record.meta.region || '-'}}</span>
               </td>
               <td data-label="Created">
-                <span>{{getFormattedDate(record.createdDate) || '-'}}</span>
+                <span>{{Utils.getFormattedDate(record.createdDate) || '-'}}</span>
               </td>
               <td data-label="Purpose / Subpurpose">
                 <span>{{(record.purpose | titlecase) || '-'}} / {{(record.subpurpose | titlecase) || '-'}}</span>

@@ -1,4 +1,4 @@
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { DocumentService } from './document.service';
 import { ApiService } from 'app/services/api';
@@ -12,7 +12,9 @@ describe('DocumentService', () => {
     });
   });
 
-  it('should be created', inject([DocumentService], (service: DocumentService) => {
+  it('should be created', () => {
+    const service = TestBed.get(DocumentService);
+
     expect(service).toBeTruthy();
-  }));
+  });
 });

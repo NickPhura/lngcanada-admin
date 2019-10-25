@@ -37,7 +37,7 @@ export class ExportService {
    * @param {string} dateProperty the object property for the date (the key path, not the value). Can be the path to a
    *                              nested date field: 'some.nested.date'
    * @returns {(row) => string} a function that takes a row and returns a string
-   * @memberof ListComponent
+   * @memberof ExportService
    */
   public static getExportDateFormatter(dateProperty: string): (row) => string {
     return row => {
@@ -70,9 +70,9 @@ export class ExportService {
    *                                     until the padLength is met or exceeded. (required)
    * @param {boolean} [padEnd=false] true if the padding should be added to the end of the string. (optional)
    * @returns {(row) => string} a function that takes a row and returns a string
-   * @memberof ListComponent
+   * @memberof ExportService
    */
-  public static getExportPadStartFormatter(
+  public static getExportPadFormatter(
     property: string,
     padLength: number,
     padValue: string,

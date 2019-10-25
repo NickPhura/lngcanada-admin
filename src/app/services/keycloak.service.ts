@@ -3,7 +3,7 @@ import { JwtUtil } from 'app/utils/jwt-utils';
 import { Observable } from 'rxjs';
 import * as _ from 'lodash';
 
-declare var Keycloak: any;
+declare let Keycloak: any;
 
 @Injectable()
 export class KeycloakService {
@@ -108,7 +108,7 @@ export class KeycloakService {
     if (!this.getToken()) {
       return false;
     }
-    const jwt = new JwtUtil().decodeToken(this.getToken());
+    const jwt = JwtUtil.decodeToken(this.getToken());
 
     if (jwt && jwt.realm_access && jwt.realm_access.roles) {
       return _.includes(jwt.realm_access.roles, 'sysadmin');

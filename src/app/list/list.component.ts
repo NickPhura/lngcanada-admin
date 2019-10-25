@@ -9,7 +9,7 @@ import { IRecordQueryParamSet } from 'app/services/api';
 import { RecordService } from 'app/services/record.service';
 import { Record } from 'app/models/record';
 import { ExportService } from 'app/services/export.service';
-// import { ExportService } from 'app/services/export.service';
+import { Utils } from 'app/utils/utils'; // used in template
 
 interface IPaginationParameters {
   totalItems?: number;
@@ -96,6 +96,7 @@ export class ListComponent implements OnInit, OnDestroy {
       this.resetPagination();
     }
 
+    console.log('111');
     forkJoin(
       this.recordService.getAll(this.getRecordQueryParamSets()),
       this.recordService.getCount(this.getRecordQueryParamSets())
@@ -143,7 +144,7 @@ export class ListComponent implements OnInit, OnDestroy {
           // All fields that will be included in the csv, and optionally what the column header text will be.
           // See www.npmjs.com/package/json2csv for details on the format of the fields array.
           const fields: any[] = [
-            { label: 'File #', value: ExportService.getExportPadStartFormatter('fileId', 10, '0') },
+            { label: 'File #', value: ExportService.getExportPadFormatter('fileId', 10, '0') },
             { label: 'Created Date', value: ExportService.getExportDateFormatter('createdDate') },
             { label: 'Publish Date', value: ExportService.getExportDateFormatter('publishDate') },
             { label: 'Description', value: 'description' }
@@ -222,7 +223,7 @@ export class ListComponent implements OnInit, OnDestroy {
     }
 
     if (this.demoFilters && this.demoFilters.length) {
-      params['demo'] = this.convertArrayIntoPipeString(this.demoFilters);
+      params['demo'] = Utils.convertArrayIntoPipeString(this.demoFilters);
     }
 
     // change browser URL without reloading page (so any query params are saved in history)
@@ -374,32 +375,6 @@ export class ListComponent implements OnInit, OnDestroy {
   }
 
   // Other
-
-  /**
-   * Turns an array of strings into a single string where each element is deliminited with a pipe character.
-   *
-   * Example: ['dog', 'cat', 'bird'] => 'dog|cat|bird|'
-   *
-   * @param {any[]} collection an array of strings to concatenate.
-   * @returns {string}
-   * @memberof ApiService
-   */
-  public convertArrayIntoPipeString(collection: string[]): string {
-    let values = '';
-    _.each(collection, a => {
-      values += a + '|';
-    });
-    // trim the last |
-    return values.replace(/\|$/, '');
-  }
-
-  getFormattedDate(date: Date = null): string {
-    if (!Date) {
-      return null;
-    }
-
-    return moment(date).format('YYYY-MM-DD');
-  }
 
   /**
    * Cleanup on component destroy.
