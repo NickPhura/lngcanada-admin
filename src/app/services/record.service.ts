@@ -24,7 +24,6 @@ export class RecordService {
    * @memberof RecordService
    */
   public getAll(queryParamSets: IRecordQueryParamSet[] = null): Observable<Record[]> {
-    console.log('111');
     let observables: Array<Observable<Record[]>>;
 
     if (queryParamSets && queryParamSets.length) {
@@ -32,11 +31,10 @@ export class RecordService {
     } else {
       observables = [this.api.getRecords()];
     }
-    console.log(observables.length);
 
     return combineLatest(...observables).pipe(
       mergeMap((results: Record[]) => {
-        console.log(results);
+        console.log('getAll', results);
         const flattenedResults = _.flatten(results);
         if (!flattenedResults || !flattenedResults.length) {
           return of([] as Record[]);
@@ -56,7 +54,7 @@ export class RecordService {
    * @memberof RecordService
    */
   public getCount(queryParamSets: IRecordQueryParamSet[] = null): Observable<number> {
-    let observables: Array<Observable<Record[]>>;
+    let observables: Array<Observable<number>>;
 
     if (queryParamSets && queryParamSets.length) {
       observables = queryParamSets.map(queryParamSet => this.api.getRecordsCount(queryParamSet));
@@ -64,15 +62,7 @@ export class RecordService {
       observables = [this.api.getRecordsCount()];
     }
 
-    return combineLatest(...observables).pipe(
-      mergeMap((results: Record[]) => {
-        const flattenedResults = _.flatten(results);
-        if (!flattenedResults || !flattenedResults.length) {
-          return of(0);
-        }
-
-        return of(flattenedResults.length);
-      }),
+    return combineLatest(observables, (...args: number[]) => args.reduce((sum, arg) => (sum += arg))).pipe(
       catchError(this.api.handleError)
     );
   }

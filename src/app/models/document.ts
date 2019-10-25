@@ -33,15 +33,6 @@ export class Document {
    * @memberof Record
    */
   static getFields(): string[] {
-    return [
-      '_id',
-      '_record',
-      '_addedBy',
-      'documentFileName',
-      'displayName',
-      'internalURL',
-      'isDeleted',
-      'internalMime'
-    ];
+    return ['_record', '_addedBy', 'documentFileName', 'displayName', 'internalURL', 'isDeleted', 'internalMime'];
   }
 }

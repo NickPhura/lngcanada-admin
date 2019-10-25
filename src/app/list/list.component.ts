@@ -16,6 +16,17 @@ interface IPaginationParameters {
   currentPage?: number;
 }
 
+/**
+ * List page component.
+ *
+ * Supports searching, filtering, pagination, and exporting.
+ * All parameters are saved to and read from the URL for easy link sharing.
+ *
+ * @export
+ * @class ListComponent
+ * @implements {OnInit}
+ * @implements {OnDestroy}
+ */
 @Component({
   selector: 'app-list',
   templateUrl: './list.component.html',
@@ -27,12 +38,12 @@ export class ListComponent implements OnInit, OnDestroy {
   // url parameters, used to set the initial state of the page on load
   public paramMap: ParamMap = null;
 
-  // indicates the page is loading
-  public loading = true;
+  // indicates the page is isLoading
+  public isLoading = true;
   // indicates a search is in progress
-  public searching = false;
+  public isSearching = false;
   // indicates an export is in progress
-  public exporting = false;
+  public isExporting = false;
 
   // list of records to display
   public records: Record[] = [];
@@ -90,7 +101,7 @@ export class ListComponent implements OnInit, OnDestroy {
    * @memberof ListComponent
    */
   public getRecords(): void {
-    this.searching = true;
+    this.isSearching = true;
 
     if (this.filterChanged) {
       this.resetPagination();
@@ -104,11 +115,13 @@ export class ListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe(
         ([records, count]) => {
+          console.log(records);
+          console.log(count);
           this.updatePagination({ totalItems: count });
           this.records = records;
 
-          this.searching = false;
-          this.loading = false;
+          this.isSearching = false;
+          this.isLoading = false;
         },
         error => {
           console.log('error = ', error);
@@ -127,7 +140,7 @@ export class ListComponent implements OnInit, OnDestroy {
    * @memberof ListComponent
    */
   public export(): void {
-    this.exporting = true;
+    this.isExporting = true;
     const queryParamsSet = this.getRecordQueryParamSets();
 
     // ignore pagination as we want to export ALL filtered results, not just the first page.
@@ -156,7 +169,7 @@ export class ListComponent implements OnInit, OnDestroy {
           alert("Uh-oh, couldn't export records");
         },
         () => {
-          this.exporting = false;
+          this.isExporting = false;
         }
       );
   }
@@ -191,8 +204,6 @@ export class ListComponent implements OnInit, OnDestroy {
   public getRecordQueryParamSets(): IRecordQueryParamSet[] {
     const recordQueryParamSet: IRecordQueryParamSet[] = [];
 
-    // None of these filters require manipulation or unique considerations
-
     const basicQueryParams: IRecordQueryParamSet = {
       isDeleted: false,
       pageNum: this.pagination.currentPage - 1, // API starts at 0, while this component starts at 1
@@ -226,7 +237,7 @@ export class ListComponent implements OnInit, OnDestroy {
       params['demo'] = Utils.convertArrayIntoPipeString(this.demoFilters);
     }
 
-    // change browser URL without reloading page (so any query params are saved in history)
+    // change browser URL without reloading page (so all query params are saved in the browsers history)
     this.location.go(this.router.createUrlTree([], { relativeTo: this.route, queryParams: params }).toString());
   }
 
@@ -324,6 +335,7 @@ export class ListComponent implements OnInit, OnDestroy {
       // is 0, which may confuse users.  Tell them to press clear button which will reset the pagination url parameter.
       this.pagination.message = 'Unable to display results, please clear and re-try';
     } else {
+      console.log(this.pagination);
       const low = Math.max((this.pagination.currentPage - 1) * this.pagination.itemsPerPage + 1, 1);
       const high = Math.min(this.pagination.totalItems, this.pagination.currentPage * this.pagination.itemsPerPage);
       this.pagination.message = `Displaying ${low} - ${high} of ${this.pagination.totalItems} records`;

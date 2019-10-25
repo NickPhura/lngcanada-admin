@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
 import { Document } from 'app/models/document';
 import { Utils } from 'app/utils/utils';
 import { Record } from 'app/models/record';
+import { map } from 'rxjs/operators';
 
 /**
  * Supported query param field modifiers used by the api to interpret the query param value.
@@ -130,8 +131,7 @@ export class ApiService {
    * @returns {Observable<Record[]>} Observable that emits the count of matching records.
    * @memberof ApiService
    */
-  getRecordsCount(queryParams: IRecordQueryParamSet = null): Observable<Record[]> {
-
+  getRecordsCount(queryParams: IRecordQueryParamSet = null): Observable<number> {
     console.log(Record.getFields());
 
     const queryString =
@@ -139,7 +139,12 @@ export class ApiService {
       `${this.buildRecordQueryParametersString(queryParams)}&` +
       `fields=${Utils.convertArrayIntoPipeString(Record.getFields())}`;
 
-    return this.http.head<Record[]>(`${this.pathAPI}/${queryString}`, {});
+    return this.http.head<HttpResponse<object>>(`${this.pathAPI}/${queryString}`, { observe: 'response' }).pipe(
+      map(res => {
+        // retrieve the count from the response headers
+        return parseInt(res.headers.get('x-total-count'), 10);
+      })
+    );
   }
 
   /**

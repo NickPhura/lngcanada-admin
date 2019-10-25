@@ -7,13 +7,13 @@
       <div class="filter-grid">
         <div>
           <!-- <select class="form-control filter-select" (change)="setRegionFilter($event.target.value)"
-            [disabled]="searching || exporting" title="Filter by Region">
+            [disabled]="isSearching || isExporting" title="Filter by Region">
             <option value="">Filter by Demo</option>
             <option *ngFor="let regionCode of regionCodes" [value]="regionCode.param"
               [selected]="regionCodeFilter === regionCode.param">{{regionCode.text.long}}</option>
           </select> -->
           <!-- <select class="form-control filter-select" (change)="setPurposeFilter($event.target.value)"
-            [disabled]="searching || exporting" title="Filter by Purpose">
+            [disabled]="isSearching || isExporting" title="Filter by Purpose">
             <option value="">Filter by Purpose</option>
             <option *ngFor="let purposeCode of purposeCodes" [value]="purposeCode.param"
               [selected]="purposeCodeFilters[0] === purposeCode.param">{{purposeCode.text.long}}</option>
@@ -22,29 +22,30 @@
 
         <div>
           <!-- <select class="form-control filter-select" (change)="setStatusFilter($event.target.value)"
-            [disabled]="searching || exporting" title="Filter by Status">
+            [disabled]="isSearching || isExporting" title="Filter by Status">
             <option value="">Filter by Status</option>
             <option *ngFor="let statusCode of statusCodes" [value]="statusCode.param"
               [selected]="statusCodeFilters[0] === statusCode.param">{{statusCode.text.long}}</option>
           </select>
           <input class="form-control filter-input" (change)="setApplicantFilter($event.target.value)"
-            [value]="applicantFilter" [disabled]="searching || exporting" placeholder="Filter by Applicant"
+            [value]="applicantFilter" [disabled]="isSearching || isExporting" placeholder="Filter by Applicant"
             title="Filter by Applicant"> -->
         </div>
 
         <div class="filter-buttons">
           <button class="filter-btn-clear btn btn-secondary" (click)="clearQueryParameters()"
-            [disabled]="searching || exporting" title="Clear search filters">Clear</button>
+            [disabled]="isSearching || isExporting" title="Clear search filters">Clear</button>
           <button class="filter-btn-search btn btn-primary" type="submit" (click)="getRecords()"
-            [disabled]="searching || exporting" title="Search for records">
+            [disabled]="isSearching || isExporting" title="Search for records">
             Search
-            <i class="spinner-border" [hidden]="!searching"></i>
+            <i class="spinner-border" [hidden]="!isSearching"></i>
           </button>
-          <button class="filter-btn-export btn btn-light" (click)="export()" [disabled]="searching || exporting"
+          <button class="filter-btn-export btn btn-light" (click)="export()"
+            [disabled]="isSearching || isExporting || pagination.totalItems <= 0"
             title="Export application list as CSV">
             Export
-            <i class="material-icons" [hidden]="exporting">file_download</i>
-            <i class="spinner-border" [hidden]="!exporting"></i>
+            <i class="material-icons" [hidden]="isExporting">file_download</i>
+            <i class="spinner-border" [hidden]="!isExporting"></i>
           </button>
         </div>
 
@@ -54,7 +55,7 @@
           </div>
 
           <div class="pagination-nav" [hidden]="pagination.pageCount <= 1">
-            <ul class="pagination" [ngClass]="{'disabled': searching || exporting}">
+            <ul class="pagination" [ngClass]="{'disabled': isSearching || isExporting}">
               <li>
                 <a class="page-link" (click)="updatePage(-1)" [hidden]="pagination.currentPage <= 1"
                   title="Previous page">Prev</a>
@@ -86,10 +87,10 @@
   </div>
 
   <div class="container">
-    <div class="loading-container" *ngIf="loading">
+    <div class="loading-container" *ngIf="isLoading">
       <div class="spinner-new rotating"></div>
     </div>
-    <div *ngIf="!loading">
+    <div *ngIf="!isLoading">
       <table class="table-cards" id="table-card">
         <thead>
           <tr>

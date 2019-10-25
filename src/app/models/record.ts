@@ -21,6 +21,6 @@ export class Record {
    * @memberof Record
    */
   static getFields(): string[] {
-    return ['_id', 'isDeleted'];
+    return ['isDeleted'];
   }
 }
